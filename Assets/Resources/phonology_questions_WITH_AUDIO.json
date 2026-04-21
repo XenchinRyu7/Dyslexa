@@ -1,0 +1,252 @@
+{
+  "difficulty_1": [
+    {
+      "stimulus": "🔊 Dengarkan huruf yang disebutkan",
+      "correctAnswer": "B",
+      "options": ["B", "P", "M", "D"],
+      "audioClipName": "difficulty_1/b"
+    },
+    {
+      "stimulus": "🔊 Dengarkan huruf yang disebutkan",
+      "correctAnswer": "D",
+      "options": ["D", "T", "N", "L"],
+      "audioClipName": "difficulty_1/d"
+    },
+    {
+      "stimulus": "🔊 Dengarkan huruf yang disebutkan",
+      "correctAnswer": "M",
+      "options": ["M", "N", "B", "P"],
+      "audioClipName": "difficulty_1/m"
+    },
+    {
+      "stimulus": "🔊 Dengarkan huruf yang disebutkan",
+      "correctAnswer": "T",
+      "options": ["T", "D", "K", "P"],
+      "audioClipName": "difficulty_1/t"
+    },
+    {
+      "stimulus": "🔊 Dengarkan huruf yang disebutkan",
+      "correctAnswer": "K",
+      "options": ["K", "G", "T", "P"],
+      "audioClipName": "difficulty_1/k"
+    },
+    {
+      "stimulus": "🔊 Dengarkan huruf yang disebutkan",
+      "correctAnswer": "S",
+      "options": ["S", "Z", "C", "SY"],
+      "audioClipName": "difficulty_1/s"
+    },
+    {
+      "stimulus": "🔊 Dengarkan huruf yang disebutkan",
+      "correctAnswer": "L",
+      "options": ["L", "R", "N", "D"],
+      "audioClipName": "difficulty_1/l"
+    },
+    {
+      "stimulus": "🔊 Dengarkan huruf yang disebutkan",
+      "correctAnswer": "N",
+      "options": ["N", "M", "NG", "D"],
+      "audioClipName": "difficulty_1/n"
+    }
+  ],
+  "difficulty_2": [
+    {
+      "stimulus": "🔊 Dengarkan suku kata yang disebutkan",
+      "correctAnswer": "BA",
+      "options": ["BA", "PA", "MA", "DA"],
+      "audioClipName": "difficulty_2/ba"
+    },
+    {
+      "stimulus": "🔊 Dengarkan suku kata yang disebutkan",
+      "correctAnswer": "DA",
+      "options": ["DA", "TA", "NA", "LA"],
+      "audioClipName": "difficulty_2/da"
+    },
+    {
+      "stimulus": "🔊 Dengarkan suku kata yang disebutkan",
+      "correctAnswer": "KA",
+      "options": ["KA", "GA", "TA", "PA"],
+      "audioClipName": "difficulty_2/ka"
+    },
+    {
+      "stimulus": "🔊 Dengarkan suku kata yang disebutkan",
+      "correctAnswer": "MA",
+      "options": ["MA", "NA", "BA", "PA"],
+      "audioClipName": "difficulty_2/ma"
+    },
+    {
+      "stimulus": "🔊 Dengarkan suku kata yang disebutkan",
+      "correctAnswer": "TA",
+      "options": ["TA", "DA", "KA", "PA"],
+      "audioClipName": "difficulty_2/ta"
+    },
+    {
+      "stimulus": "🔊 Dengarkan suku kata yang disebutkan",
+      "correctAnswer": "BI",
+      "options": ["BI", "PI", "MI", "DI"],
+      "audioClipName": "difficulty_2/bi"
+    },
+    {
+      "stimulus": "🔊 Dengarkan suku kata yang disebutkan",
+      "correctAnswer": "LI",
+      "options": ["LI", "RI", "NI", "DI"],
+      "audioClipName": "difficulty_2/li"
+    },
+    {
+      "stimulus": "🔊 Dengarkan suku kata yang disebutkan",
+      "correctAnswer": "SU",
+      "options": ["SU", "ZU", "CU", "SYU"],
+      "audioClipName": "difficulty_2/su"
+    }
+  ],
+  "difficulty_3": [
+    {
+      "stimulus": "🔊 Dengarkan kata yang disebutkan",
+      "correctAnswer": "BOLA",
+      "options": ["BOLA", "POLA", "MOLA", "DOLA"],
+      "audioClipName": "difficulty_3/bola"
+    },
+    {
+      "stimulus": "🔊 Dengarkan kata yang disebutkan",
+      "correctAnswer": "DADU",
+      "options": ["DADU", "TADU", "NADU", "LADU"],
+      "audioClipName": "difficulty_3/dadu"
+    },
+    {
+      "stimulus": "🔊 Dengarkan kata yang disebutkan",
+      "correctAnswer": "KAKI",
+      "options": ["KAKI", "GAKI", "TAKI", "PAKI"],
+      "audioClipName": "difficulty_3/kaki"
+    },
+    {
+      "stimulus": "🔊 Dengarkan kata yang disebutkan",
+      "correctAnswer": "MAKAN",
+      "options": ["MAKAN", "NAKAN", "BAKAN", "PAKAN"],
+      "audioClipName": "difficulty_3/makan"
+    },
+    {
+      "stimulus": "🔊 Dengarkan kata yang disebutkan",
+      "correctAnswer": "TAMAN",
+      "options": ["TAMAN", "DAMAN", "KAMAN", "PAMAN"],
+      "audioClipName": "difficulty_3/taman"
+    },
+    {
+      "stimulus": "🔊 Dengarkan kata yang disebutkan",
+      "correctAnswer": "LARI",
+      "options": ["LARI", "RARI", "NARI", "DARI"],
+      "audioClipName": "difficulty_3/lari"
+    },
+    {
+      "stimulus": "🔊 Dengarkan kata yang disebutkan",
+      "correctAnswer": "SAPI",
+      "options": ["SAPI", "ZAPI", "CAPI", "SYAPI"],
+      "audioClipName": "difficulty_3/sapi"
+    },
+    {
+      "stimulus": "🔊 Dengarkan kata yang disebutkan",
+      "correctAnswer": "BUKU",
+      "options": ["BUKU", "PUKU", "MUKU", "DUKU"],
+      "audioClipName": "difficulty_3/buku"
+    }
+  ],
+  "difficulty_4": [
+    {
+      "stimulus": "🔊 Dengarkan kata yang disebutkan",
+      "correctAnswer": "KRAN",
+      "options": ["KRAN", "GRAN", "TRAN", "PRAN"],
+      "audioClipName": "difficulty_4/kran"
+    },
+    {
+      "stimulus": "🔊 Dengarkan kata yang disebutkan",
+      "correctAnswer": "PRIA",
+      "options": ["PRIA", "BRIA", "TRIA", "KRIA"],
+      "audioClipName": "difficulty_4/pria"
+    },
+    {
+      "stimulus": "🔊 Dengarkan kata yang disebutkan",
+      "correctAnswer": "TREN",
+      "options": ["TREN", "DREN", "KREN", "PREN"],
+      "audioClipName": "difficulty_4/tren"
+    },
+    {
+      "stimulus": "🔊 Dengarkan kata yang disebutkan",
+      "correctAnswer": "BLAN",
+      "options": ["BLAN", "PLAN", "MLAN", "DLAN"],
+      "audioClipName": "difficulty_4/blan"
+    },
+    {
+      "stimulus": "🔊 Dengarkan kata yang disebutkan",
+      "correctAnswer": "GRATIS",
+      "options": ["GRATIS", "KRATIS", "DRATIS", "PRATIS"],
+      "audioClipName": "difficulty_4/gratis"
+    },
+    {
+      "stimulus": "🔊 Dengarkan kata yang disebutkan",
+      "correctAnswer": "BLOK",
+      "options": ["BLOK", "PLOK", "MLOK", "DLOK"],
+      "audioClipName": "difficulty_4/blok"
+    },
+    {
+      "stimulus": "🔊 Dengarkan kata yang disebutkan",
+      "correctAnswer": "STABIL",
+      "options": ["STABIL", "STADIL", "STAKIL", "STAPIL"],
+      "audioClipName": "difficulty_4/stabil"
+    },
+    {
+      "stimulus": "🔊 Dengarkan kata yang disebutkan",
+      "correctAnswer": "SKRIP",
+      "options": ["SKRIP", "SDRIP", "SKRIP", "STIP"],
+      "audioClipName": "difficulty_4/skrip"
+    }
+  ],
+  "difficulty_5": [
+    {
+      "stimulus": "🔊 Dengarkan kata yang disebutkan",
+      "correctAnswer": "KONSTRUKSI",
+      "options": ["KONSTRUKSI", "GONTRUKSI", "KONTRUPSI", "KONTRUGSI"],
+      "audioClipName": "difficulty_5/konstruksi"
+    },
+    {
+      "stimulus": "🔊 Dengarkan kata yang disebutkan",
+      "correctAnswer": "ADMINISTRASI",
+      "options": ["ADMINISTRASI", "ATMINISTRASI", "ADNINISTRASI", "ADMITISTRASI"],
+      "audioClipName": "difficulty_5/administrasi"
+    },
+    {
+      "stimulus": "🔊 Dengarkan kata yang disebutkan",
+      "correctAnswer": "INFRASTRUKTUR",
+      "options": ["INFRASTRUKTUR", "IMFRASTRUKTUR", "INFRASTRUGTUL", "IMFRASTLUGTUR"],
+      "audioClipName": "difficulty_5/infrastruktur"
+    },
+    {
+      "stimulus": "🔊 Dengarkan kata yang disebutkan",
+      "correctAnswer": "TRANSFORMASI",
+      "options": ["TRANSFORMASI", "DRAMFORMASI", "TRANSBORMASI", "TRANSPOLMASI"],
+      "audioClipName": "difficulty_5/transformasi"
+    },
+    {
+      "stimulus": "🔊 Dengarkan kata yang disebutkan",
+      "correctAnswer": "KOMUNIKASI",
+      "options": ["KOMUNIKASI", "GOMUNIKASI", "KOMUNIGASI", "KOMUNITASI"],
+      "audioClipName": "difficulty_5/komunikasi"
+    },
+    {
+      "stimulus": "🔊 Dengarkan kata yang disebutkan",
+      "correctAnswer": "KOMPLEKSITAS",
+      "options": ["KOMPLEKSITAS", "GOMBLEKSITAS", "KOMPLEKPITAS", "KONPLEKSITAS"],
+      "audioClipName": "difficulty_5/kompleksitas"
+    },
+    {
+      "stimulus": "🔊 Dengarkan kata yang disebutkan",
+      "correctAnswer": "RESTRUKTURISASI",
+      "options": ["RESTRUKTURISASI", "LESTRUGTURISASI", "RESTRUKDULISASI", "RESTLUPTURISASI"],
+      "audioClipName": "difficulty_5/restrukturisasi"
+    },
+    {
+      "stimulus": "🔊 Dengarkan kata yang disebutkan",
+      "correctAnswer": "PRODUKTIVITAS",
+      "options": ["PRODUKTIVITAS", "BRODUPTIVITAS", "PRODUGDIVITAS", "PLODUKDIVITAS"],
+      "audioClipName": "difficulty_5/produktivitas"
+    }
+  ]
+}
