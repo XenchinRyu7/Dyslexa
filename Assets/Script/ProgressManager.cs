@@ -48,8 +48,24 @@ public class ProgressManager : MonoBehaviour
 
     void InitializeProgress()
     {
-        saveFilePath = Path.Combine(Application.persistentDataPath, "game_progress.json");
+        // Path default sebelum profil dipilih — akan di-override oleh LoadForProfile()
+        saveFilePath = Path.Combine(Application.persistentDataPath, "progress_default.json");
+        progress = new GameProgress(); // kosong dulu, tunggu profil dipilih
+    }
+
+    /// <summary>
+    /// Dipanggil saat profil dipilih. Load progress khusus profil tersebut.
+    /// </summary>
+    public void LoadForProfile(string profileId)
+    {
+        if (string.IsNullOrEmpty(profileId))
+        {
+            Debug.LogWarning("[ProgressManager] profileId kosong, pakai default.");
+            return;
+        }
+        saveFilePath = Path.Combine(Application.persistentDataPath, $"progress_{profileId}.json");
         LoadProgress();
+        Debug.Log($"[ProgressManager] Progress file: progress_{profileId}.json");
     }
 
     public void LoadProgress()

@@ -11,21 +11,27 @@ public class GameSessionManager : MonoBehaviour
     public GameObject slotPrefab;
     public Transform progressContainer;
 
-    [Header("UI Elements")]
-    public TextMeshProUGUI quizTitleText;
-    public TextMeshProUGUI questionText;
-    public Transform answerContainer;
-    public GameObject answerButtonPrefab;
-    public GameObject feedbackPanel;
-    public TextMeshProUGUI feedbackText;
+    [Header("Shared UI")]
     public TextMeshProUGUI timerText;
+    public TextMeshProUGUI feedbackText;
+    public GameObject feedbackPanel;
     public Button backToMapButton;
-    public Button playSoundButton; // NEW: Play audio for phonology questions
-    public AudioSource audioSource; // NEW: Audio playback
+
+    [Header("Panel Prefabs (instantiate saat soal muncul)")]
+    public GameObject prefabVisualLetter;    // VisualLetter.prefab
+    public GameObject prefabVisualSpacing;   // VisualSpacing.prefab
+    public GameObject prefabBlending;        // PanelBlending.prefab
+    public GameObject prefabSegmenting;      // PanelSegmenting.prefab
+
+    [Header("Panel Container")]
+    public Transform panelParent; // Canvas atau RectTransform tempat panel di-spawn
+
+    // Instance aktif saat ini (di-destroy saat ganti soal)
+    private GameObject activePanelInstance;
 
     [Header("Session Settings")]
     public int totalQuestions = 15;
-    public int nodeIndex = 0; // Set from LevelMap
+    public int nodeIndex = 0;
 
     [Header("Managers")]
     private QuestionGenerator questionGenerator;
@@ -37,85 +43,69 @@ public class GameSessionManager : MonoBehaviour
     private List<Question> questions;
     private int currentQuestionIndex = 0;
     private Question currentQuestion;
+    private string selectedMode;
 
-    // Metrics tracking
+    // Metrics
     private SessionMetrics sessionMetrics;
     private float questionStartTime;
-    private float sessionStartTime; // NEW: Track total session time
+    private float sessionStartTime;
     private int difficultyAtStart;
 
     // Progress bar
     private List<Image> progressSlots = new List<Image>();
-    private Color32 emptyColor = new Color32(33, 39, 58, 255);   // #21273A
-    private Color32 filledColor = new Color32(37, 116, 255, 255); // #2574FF
+    private Color32 emptyColor  = new Color32(33, 39, 58, 255);
+    private Color32 filledColor = new Color32(37, 116, 255, 255);
 
     void Start()
     {
-        // Get selected node index from PlayerPrefs
-        nodeIndex = PlayerPrefs.GetInt("SelectedNodeIndex", 0);
-        
+        nodeIndex    = PlayerPrefs.GetInt("SelectedNodeIndex", 0);
+        selectedMode = PlayerPrefs.GetString("SelectedGameMode", "Visual");
+
+        // Auto-cari Canvas jika panelParent belum di-assign di Inspector
+        if (panelParent == null)
+        {
+            Canvas c = FindObjectOfType<Canvas>();
+            if (c != null)
+            {
+                panelParent = c.transform;
+                Debug.LogWarning("[GameSession] panelParent null — auto-assigned ke Canvas: " + c.name);
+            }
+            else
+                Debug.LogError("[GameSession] Tidak ada Canvas di scene! Panel tidak bisa di-spawn.");
+        }
+
         InitializeManagers();
         InitializeProgressBar();
         InitializeMetrics();
-        
-        // Setup back to map button
+
         if (backToMapButton != null)
-        {
-            backToMapButton.gameObject.SetActive(false); // Hidden initially
             backToMapButton.onClick.AddListener(() => SceneManager.LoadScene("LevelMap"));
-        }
-        
-        // Setup audio source
-        if (audioSource == null)
-        {
-            audioSource = gameObject.AddComponent<AudioSource>();
-        }
-        
-        // Setup play sound button
-        if (playSoundButton != null)
-        {
-            playSoundButton.onClick.AddListener(PlayCurrentQuestionAudio);
-        }
-        
+
         StartSession();
     }
 
     void Update()
     {
-        // Update timer display during gameplay
         if (currentState == SessionState.WaitingAnswer || currentState == SessionState.ShowingQuestion)
         {
             if (timerText != null)
             {
-                float elapsedTime = Time.time - sessionStartTime;
-                timerText.text = $"Waktu: {elapsedTime:F1}s";
+                float elapsed = Time.time - sessionStartTime;
+                timerText.text = $"Waktu: {elapsed:F1}s";
             }
         }
     }
 
     void InitializeManagers()
     {
-        // Get or add required components
-        questionGenerator = GetComponent<QuestionGenerator>();
-        if (questionGenerator == null)
-            questionGenerator = gameObject.AddComponent<QuestionGenerator>();
-
-        ruleEngine = GetComponent<RuleEngine>();
-        if (ruleEngine == null)
-            ruleEngine = gameObject.AddComponent<RuleEngine>();
-
-        logger = GetComponent<Logger>();
-        if (logger == null)
-            logger = gameObject.AddComponent<Logger>();
+        questionGenerator = GetComponent<QuestionGenerator>() ?? gameObject.AddComponent<QuestionGenerator>();
+        ruleEngine        = GetComponent<RuleEngine>()        ?? gameObject.AddComponent<RuleEngine>();
+        logger            = GetComponent<Logger>()            ?? gameObject.AddComponent<Logger>();
     }
 
     void InitializeProgressBar()
     {
-        if (slotPrefab == null || progressContainer == null)
-        {
-            Debug.LogWarning("[GameSession] Progress bar prefab or container not assigned!");
-            return;
-        }
+        if (slotPrefab == null || progressContainer == null) return;
 
         for (int i = 0; i < totalQuestions; i++)
         {
@@ -130,54 +120,32 @@ public class GameSessionManager : MonoBehaviour
     {
         sessionMetrics = new SessionMetrics
         {
-            total_soal = totalQuestions,
-            jumlah_benar = 0,
-            jumlah_salah = 0,
+            total_soal          = totalQuestions,
+            jumlah_benar        = 0,
+            jumlah_salah        = 0,
             kesalahan_fonologis = 0,
-            kesalahan_visual = 0,
-            penggunaan_hint = 0,
-            rata_waktu_respons = 0f,
-            waktu_penyelesaian = 0f // NEW
+            kesalahan_visual    = 0,
+            penggunaan_hint     = 0,
+            rata_waktu_respons  = 0f,
+            waktu_penyelesaian  = 0f
         };
 
         difficultyAtStart = ruleEngine.GetCurrentDifficulty();
-        sessionStartTime = Time.time;
+        sessionStartTime  = Time.time;
     }
 
     void StartSession()
     {
         currentState = SessionState.Loading;
 
-        if (quizTitleText != null)
-            quizTitleText.text = $"Session {nodeIndex + 1}";
 
-        // Cek mode apa yang dipilih pemain di scene ChooseMode
-        float pWeight = ruleEngine.GetPhonologyWeight();
-        float vWeight = ruleEngine.GetVisualWeight();
-
-        string selectedMode = PlayerPrefs.GetString("SelectedGameMode", "Mixed");
-        if (selectedMode == "Fonologis")
-        {
-            pWeight = 1.0f; // 100% soal fonologis
-            vWeight = 0.0f;
-            Debug.Log("[GameSession] Mode FONOLOGIS terpilih: Memaksa 100% soal fonologis.");
-        }
-        else if (selectedMode == "Visual")
-        {
-            pWeight = 0.0f;
-            vWeight = 1.0f; // 100% soal visual
-            Debug.Log("[GameSession] Mode VISUAL terpilih: Memaksa 100% soal visual.");
-        }
-
-        // Generate question set dengan weight yang sudah disesuaikan
         questions = questionGenerator.GenerateQuestionSet(
             totalQuestions,
             ruleEngine.GetCurrentDifficulty(),
-            pWeight,
-            vWeight
+            selectedMode
         );
 
-        Debug.Log($"[GameSession] Generated {questions.Count} questions");
+        Debug.Log($"[GameSession] {questions.Count} soal di-generate. Mode: {selectedMode}");
 
         currentQuestionIndex = 0;
         ShowNextQuestion();
@@ -191,72 +159,80 @@ public class GameSessionManager : MonoBehaviour
             return;
         }
 
-        currentState = SessionState.ShowingQuestion;
+        currentState   = SessionState.ShowingQuestion;
         currentQuestion = questions[currentQuestionIndex];
 
-        // Update UI
-        if (questionText != null)
-            questionText.text = currentQuestion.stimulus;
+        if (feedbackPanel != null) feedbackPanel.SetActive(false);
 
-        // Clear previous answer buttons
-        foreach (Transform child in answerContainer)
-        {
-            Destroy(child.gameObject);
-        }
+        SpawnPanelForQuestion(currentQuestion);
 
-        // Create answer buttons
-        foreach (string option in currentQuestion.options)
-        {
-            GameObject btnObj = Instantiate(answerButtonPrefab, answerContainer);
-            Button btn = btnObj.GetComponent<Button>();
-            TextMeshProUGUI btnText = btnObj.GetComponentInChildren<TextMeshProUGUI>();
-
-            if (btnText != null)
-                btnText.text = option;
-
-            string selectedAnswer = option; // Capture for closure
-            btn.onClick.AddListener(() => OnAnswerSelected(selectedAnswer));
-        }
-
-        // Hide feedback panel
-        if (feedbackPanel != null)
-            feedbackPanel.SetActive(false);
-
-        // Show/hide play sound button based on question type
-        if (playSoundButton != null)
-        {
-            if (currentQuestion.type == QuestionType.Phonology)
-            {
-                playSoundButton.gameObject.SetActive(true);
-                // Auto-play audio for phonology questions
-                PlayCurrentQuestionAudio();
-            }
-            else
-            {
-                playSoundButton.gameObject.SetActive(false);
-            }
-        }
-
-        // Start timer
         questionStartTime = Time.time;
         currentState = SessionState.WaitingAnswer;
 
-        Debug.Log($"[GameSession] Showing question {currentQuestionIndex + 1}/{totalQuestions}");
-        Debug.Log($"[GameSession] Question type: {currentQuestion.type}");
+        Debug.Log($"[GameSession] Soal {currentQuestionIndex + 1}/{totalQuestions} — Tipe: {currentQuestion.type}");
     }
+
+    // =============================================
+    // SPAWN PANEL DARI PREFAB
+    // =============================================
+
+    void SpawnPanelForQuestion(Question q)
+    {
+        // Destroy panel sebelumnya
+        if (activePanelInstance != null)
+            Destroy(activePanelInstance);
+
+        // Pilih prefab yang sesuai
+        GameObject prefab = null;
+        switch (q.type)
+        {
+            case QuestionType.VisualLetterRecognition:  prefab = prefabVisualLetter;  break;
+            case QuestionType.VisualSpacing:            prefab = prefabVisualSpacing; break;
+            case QuestionType.PhonologyBlending:        prefab = prefabBlending;      break;
+            case QuestionType.PhonologySegmenting:      prefab = prefabSegmenting;    break;
+        }
+
+        if (prefab == null)
+        {
+            Debug.LogError($"[GameSession] Prefab untuk tipe {q.type} belum di-assign di Inspector!");
+            return;
+        }
+
+        // Instantiate ke panelParent (Canvas)
+        activePanelInstance = Instantiate(prefab, panelParent);
+
+        // Ambil script panel dan panggil ShowQuestion
+        switch (q.type)
+        {
+            case QuestionType.VisualLetterRecognition:
+                activePanelInstance.GetComponent<VisualLetterPanel>()?.ShowQuestion(q, OnAnswerSelected);
+                break;
+            case QuestionType.VisualSpacing:
+                activePanelInstance.GetComponent<VisualSpacingPanel>()?.ShowQuestion(q, OnAnswerSelected);
+                break;
+            case QuestionType.PhonologyBlending:
+                activePanelInstance.GetComponent<FonologisBlendingPanel>()?.ShowQuestion(q, OnAnswerSelected);
+                break;
+            case QuestionType.PhonologySegmenting:
+                activePanelInstance.GetComponent<FonologisSegmentingPanel>()?.ShowQuestion(q, OnAnswerSelected);
+                break;
+        }
+
+        Debug.Log($"[GameSession] Panel spawned: {q.type}");
+    }
+
+    // =============================================
+    // ANSWER HANDLING (dipanggil dari semua panel)
+    // =============================================
 
     public void OnAnswerSelected(string answer)
     {
-        if (currentState != SessionState.WaitingAnswer)
-            return;
+        if (currentState != SessionState.WaitingAnswer) return;
 
         currentState = SessionState.ShowingFeedback;
 
-        // Calculate response time
         float responseTime = Time.time - questionStartTime;
-
-        // Check answer
-        bool isCorrect = answer == currentQuestion.correctAnswer;
+        bool isCorrect     = answer == currentQuestion.correctAnswer;
 
         // Update metrics
         if (isCorrect)
@@ -266,173 +242,104 @@ public class GameSessionManager : MonoBehaviour
         else
         {
             sessionMetrics.jumlah_salah++;
-
-            // Track error types
-            if (currentQuestion.type == QuestionType.Phonology)
+            if (QuestionTypeHelper.IsFonologis(currentQuestion.type))
                 sessionMetrics.kesalahan_fonologis++;
             else
                 sessionMetrics.kesalahan_visual++;
         }
 
-        // Update average response time
-        float totalTime = sessionMetrics.rata_waktu_respons * currentQuestionIndex;
-        sessionMetrics.rata_waktu_respons = (totalTime + responseTime) / (currentQuestionIndex + 1);
+        // Rolling average response time
+        float total = sessionMetrics.rata_waktu_respons * currentQuestionIndex;
+        sessionMetrics.rata_waktu_respons = (total + responseTime) / (currentQuestionIndex + 1);
 
-        // Log question
-        logger.LogQuestion(
-            nodeIndex,
-            ruleEngine.GetCurrentDifficulty(),
-            currentQuestion.type,
-            isCorrect,
-            responseTime,
-            false // usedHint - implement hint system later
-        );
+        // Log
+        // Map ke tipe lama untuk kompatibilitas Logger
+        QuestionType logType = QuestionTypeHelper.IsFonologis(currentQuestion.type)
+            ? QuestionType.PhonologyBlending
+            : QuestionType.VisualLetterRecognition;
 
-        // Update progress bar
+        logger.LogQuestion(nodeIndex, ruleEngine.GetCurrentDifficulty(), currentQuestion.type, isCorrect, responseTime, false);
+
         UpdateProgressBar();
-
-        // Show feedback
-        ShowFeedback(isCorrect);
-
-        // Move to next question after delay
-        StartCoroutine(NextQuestionAfterDelay(1.5f));
+        StartCoroutine(ShowFeedbackThenNext(isCorrect));
     }
 
     void UpdateProgressBar()
     {
         if (currentQuestionIndex < progressSlots.Count)
-        {
             progressSlots[currentQuestionIndex].color = filledColor;
+    }
+
+    IEnumerator ShowFeedbackThenNext(bool isCorrect)
+    {
+        // 1. Hide panel soal
+        if (activePanelInstance != null)
+            activePanelInstance.SetActive(false);
+
+        // 2. Tampilkan feedback benar/salah
+        if (feedbackPanel != null) feedbackPanel.SetActive(true);
+        if (feedbackText != null)
+        {
+            feedbackText.text  = isCorrect ? "Benar! 🎉" : "Salah ❌";
+            feedbackText.color = isCorrect ? Color.green : Color.red;
         }
-    }
 
-    void ShowFeedback(bool isCorrect)
-    {
-        if (feedbackPanel == null || feedbackText == null)
-            return;
+        // 3. Tunggu 1 detik
+        yield return new WaitForSeconds(1f);
 
-        feedbackPanel.SetActive(true);
-        feedbackText.text = isCorrect ? "Benar!" : "Salah";
-        feedbackText.color = isCorrect ? Color.green : Color.red;
-    }
+        // 4. Hide feedback
+        if (feedbackPanel != null) feedbackPanel.SetActive(false);
 
-    IEnumerator NextQuestionAfterDelay(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-
+        // 5. Lanjut ke soal berikutnya (Destroy panel lama + spawn baru)
         currentQuestionIndex++;
         ShowNextQuestion();
     }
 
+    // =============================================
+    // END SESSION
+    // =============================================
+
     void EndSession()
     {
         currentState = SessionState.Finished;
-
-        // Calculate total session completion time
         sessionMetrics.waktu_penyelesaian = Time.time - sessionStartTime;
-
-        Debug.Log("[GameSession] Session finished!");
-
-        // Calculate final metrics
         sessionMetrics.CalculateDerivedMetrics();
 
-        // Get difficulty before evaluation
-        int difficultyBefore = ruleEngine.GetCurrentDifficulty();
-
-        // Let RuleEngine evaluate and adapt (updates GLOBAL difficulty)
+        int diffBefore = difficultyAtStart;
         ruleEngine.EvaluateAndAdapt(sessionMetrics);
-        
-        // Get difficulty after evaluation
-        int difficultyAfter = ruleEngine.GetCurrentDifficulty();
+        int diffAfter = ruleEngine.GetCurrentDifficulty();
 
-        // Update ProgressManager with session stats
         ProgressManager.Instance.UpdateSessionStats(sessionMetrics);
-
-        // Log session
-        logger.LogSession(nodeIndex, sessionMetrics, difficultyBefore, difficultyAfter);
-
-        // Check and unlock next node if mastery achieved
+        logger.LogSession(nodeIndex, sessionMetrics, diffBefore, diffAfter);
         LevelMapGenerator.CheckAndUnlockNode(sessionMetrics);
 
-        // Show results
-        ShowResults();
+        ShowResults(diffBefore, diffAfter);
     }
 
-    void ShowResults()
+    void ShowResults(int diffBefore, int diffAfter)
     {
-        // Hide feedback panel if showing
-        if (feedbackPanel != null)
-            feedbackPanel.SetActive(false);
-
-        // Clear answer buttons
-        foreach (Transform child in answerContainer)
+        // Destroy panel aktif saat session selesai
+        if (activePanelInstance != null)
         {
-            Destroy(child.gameObject);
+            Destroy(activePanelInstance);
+            activePanelInstance = null;
+        }
+        // Tampilkan ringkasan hasil sesi di feedbackPanel
+        if (feedbackPanel != null) feedbackPanel.SetActive(true);
+        if (feedbackText != null)
+        {
+            feedbackText.text =
+                $"<b>SESSION SELESAI!</b>\n\n" +
+                $"Mode: {selectedMode}\n" +
+                $"✓ Benar: {sessionMetrics.jumlah_benar}/{sessionMetrics.total_soal}\n" +
+                $"Akurasi: {sessionMetrics.accuracy:P0}\n" +
+                $"Waktu: {sessionMetrics.waktu_penyelesaian:F1}s\n" +
+                $"Difficulty: {diffBefore} → {diffAfter}";
         }
 
-        // Show detailed results
-        if (questionText != null)
-        {
-            string resultText = $"<size=40><b>SESSION SELESAI!</b></size>\n\n";
-            resultText += $"<b>HASIL:</b>\n";
-            resultText += $"✓ Benar: <color=green>{sessionMetrics.jumlah_benar}</color>/{sessionMetrics.total_soal}\n";
-            resultText += $"✗ Salah: <color=red>{sessionMetrics.jumlah_salah}</color>\n";
-            resultText += $"Akurasi: <b>{sessionMetrics.accuracy:P0}</b>\n\n";
-            
-            resultText += $"<b>DETAIL ERROR:</b>\n";
-            resultText += $"Kesalahan Fonologis: {sessionMetrics.kesalahan_fonologis}\n";
-            resultText += $"Kesalahan Visual: {sessionMetrics.kesalahan_visual}\n\n";
-            
-            resultText += $"<b>WAKTU:</b>\n";
-            resultText += $"Total: {sessionMetrics.waktu_penyelesaian:F1}s\n";
-            resultText += $"Rata-rata: {sessionMetrics.rata_waktu_respons:F1}s/soal\n\n";
-            
-            resultText += $"<b>DIFFICULTY:</b>\n";
-            resultText += $"Before: {difficultyAtStart} → After: {ruleEngine.GetCurrentDifficulty()}";
-            
-            questionText.text = resultText;
-        }
-
-        if (feedbackPanel != null && backToMapButton != null)
-        {
-            feedbackPanel.SetActive(true);
+        if (backToMapButton != null)
             backToMapButton.gameObject.SetActive(true);
-            
-            if (feedbackText != null)
-                feedbackText.gameObject.SetActive(false);
-        }
     }
 
-    void PlayCurrentQuestionAudio()
-    {
-        if (currentQuestion == null || audioSource == null)
-            return;
-
-        if (currentQuestion.type != QuestionType.Phonology)
-            return;
-
-        if (string.IsNullOrEmpty(currentQuestion.audioClipName))
-        {
-            Debug.LogWarning("[GameSession] No audio clip name for phonology question!");
-            return;
-        }
-
-        // Load audio from Resources (audioClipName already includes path like "Audio/sound_b")
-        AudioClip clip = Resources.Load<AudioClip>(currentQuestion.audioClipName);
-
-        if (clip != null)
-        {
-            audioSource.PlayOneShot(clip);
-            Debug.Log($"[GameSession] Playing audio: {currentQuestion.audioClipName}");
-        }
-        else
-        {
-            Debug.LogWarning($"[GameSession] Audio not found: {currentQuestion.audioClipName}");
-        }
-    }
-
-    public SessionMetrics GetSessionMetrics()
-    {
-        return sessionMetrics;
-    }
+    public SessionMetrics GetSessionMetrics() => sessionMetrics;
 }

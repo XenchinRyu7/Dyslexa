@@ -1,253 +1,191 @@
-# 📁 File Structure Lengkap
+# 📁 File Structure — Dyslexa
+
+> Terakhir diupdate: Setelah refactor GameSession ke 4 Mode (April 2026)
+
+---
 
 ## Scripts (.cs)
+
 ```
 Script/
-├── Question.cs              ✅ Question model & enum
-├── QuestionData.cs          ✅ JSON deserialization model
+│
+│── [CORE DATA]
+├── Question.cs              ✅ Question model & 4 QuestionType enum
 ├── SessionState.cs          ✅ Session state machine enum
-├── QuestionGenerator.cs     ✅ Generate questions from JSON
-├── RuleEngine.cs            ✅ Adaptive difficulty logic
-├── Logger.cs                ✅ JSON logging system
-├── ProgressManager.cs       ✅ Global persistent state (Singleton)
-├── GameSessionManager.cs    ✅ Main session controller
-├── LevelMapGenerator.cs     ✅ Level map with unlock logic
-├── LevelNode.cs            ✅ Node state management
-├── MainNavigation.cs       ✅ Scene navigation (existing)
-└── DebugHelper.cs          ✅ Debug tools untuk testing
+├── PlayerProfile.cs         ✅ Data model profil anak + PlayerProfileData
+│
+│── [MANAGERS - Singleton / DontDestroyOnLoad]
+├── PlayerProfileManager.cs  ✅ Save/load profil (JSON), ActiveProfile state
+├── ProgressManager.cs       ✅ Global persistent state (difficulty, weights, unlocked)
+├── DataExportManager.cs     ✅ Export CSV (Excel) & HTML Report (PDF-ready)
+│
+│── [GAME SESSION]
+├── GameSessionManager.cs    ✅ Orkestrasi sesi, routing ke 4 panel, metrics
+├── QuestionGenerator.cs     ✅ Built-in bank soal untuk 4 mode gameplay
+├── RuleEngine.cs            ✅ Adaptive difficulty logic + SessionMetrics
+├── Logger.cs                ✅ JSON logging (question_logs, session_logs)
+│
+│── [GAME SESSION — PANELS]
+├── VisualLetterPanel.cs     ✅ Panel Visual Letter Recognition
+├── VisualSpacingPanel.cs    ✅ Panel Visual Spacing Awareness
+├── FonologisBlendingPanel.cs   ✅ Panel Fonologis Blending (audio → gambar)
+├── FonologisSegmentingPanel.cs ✅ Panel Fonologis Segmenting (gambar → drag suku kata)
+│
+│── [GAME SESSION — DRAG & DROP]
+├── DraggableSyllable.cs     ✅ Suku kata yang bisa di-drag (IBeginDrag/IDrag/IEndDrag)
+├── SyllableDropSlot.cs      ✅ Slot penerima suku kata (IDropHandler)
+│
+│── [LEVEL MAP]
+├── LevelMapGenerator.cs     ✅ Generate node map + unlock logic
+├── LevelNode.cs             ✅ Node state (Locked/Unlocked) + nomor urut
+│
+│── [UI / NAVIGATION]
+├── MainNavigation.cs        ✅ Scene navigation umum
+├── ChooseModeManager.cs     ✅ Scene ChooseMode — display profile, pilih mode
+├── ProfileLoader.cs         ✅ Scene ContinueGame — list profil + confirm delete
+├── SettingsWindowManager.cs ✅ HomeScreen — Settings window (export Excel/PDF)
+│
+│── [DEBUG]
+└── DebugHelper.cs           ✅ Debug keyboard shortcut (P/R/U/M key)
 ```
 
-## Resources (JSON Question Banks)
+### ⛔ Script yang Dihapus (Setelah Refactor)
+```
+DynamicQuestionGenerator.cs  ❌ HAPUS — tidak digunakan setelah bank soal pindah ke built-in
+QuestionData.cs              ❌ HAPUS — tidak digunakan setelah JSON bank dihilangkan
+```
+
+---
+
+## Resources
+
 ```
 Resources/
-├── phonology_questions.json  ✅ 8 soal × 5 difficulty levels
-├── visual_questions.json     ✅ 8 soal × 5 difficulty levels
+├── Images/                  ⚠️ Tambahkan gambar benda (meja, bola, kuda, dll)
+│   └── [nama_benda].png     → format: "Images/meja", "Images/bola", dst
+├── Audio/                   ⚠️ Tambahkan audio kata & suku kata
+│   ├── meja.mp3             → Audio/meja (untuk Blending)
+│   └── suku/bo.mp3          → Audio/suku/bo (untuk Segmenting per suku)
 ├── Background/              (existing sprites)
 ├── Fonts/                   (existing fonts)
 └── Sprite/                  (existing UI sprites)
 ```
 
-## Documentation
-```
-Assets/
-├── Readme.Md                ✅ Main specification
-├── ADAPTIVE_SCALING.md      ✅ Scaling system explanation
-└── FILE_STRUCTURE.md        ✅ This file
-```
+> **Catatan**: `phonology_questions.json` dan `visual_questions.json` sudah tidak digunakan.  
+> Bank soal sekarang **built-in** di `QuestionGenerator.cs`.
 
-## Saved Data (Runtime - Auto generated)
+---
+
+## Saved Data (Runtime — Auto generated)
+
 ```
 Application.persistentDataPath/
-├── game_progress.json       → Global progress (difficulty, weights, unlocked)
-├── question_logs.json       → Per-question logs
-└── session_logs.json        → Per-session logs
+├── player_profiles.json     → Semua profil anak (nama, umur, gender)
+├── game_progress.json       → Global progress (difficulty, unlocked nodes)
+├── question_logs.json       → Log per soal
+├── session_logs.json        → Log per sesi
+├── Dyslexa_DataExport.csv   → Export Excel (dipicu dari Settings)
+└── Dyslexa_Report.html      → Export PDF-ready (dipicu dari Settings)
 ```
 
 ---
 
-## 🎮 Data Flow
+## 🎮 Alur Navigasi Scene
 
-### Startup
 ```
-1. ProgressManager (Singleton) loads game_progress.json
-2. MainMenu → LevelMap
-3. LevelMap loads current unlocked nodes from ProgressManager
-```
+HomeScreen
+ ├── [New Game] → NewGame → OnboardingAge → OnboardingGender → ChooseMode
+ ├── [Continue] → ContinueGame (list profil) → ChooseMode
+ └── [Settings] → Settings Window (Export Excel / PDF)
 
-### Session Flow
-```
-1. Player clicks Node X
-2. LevelMap saves nodeIndex to PlayerPrefs
-3. Load GameSession scene
-4. GameSessionManager:
-   ├── Get nodeIndex from PlayerPrefs
-   ├── Get global difficulty from ProgressManager
-   ├── QuestionGenerator loads JSON banks (Resources)
-   ├── Generate 15 mixed questions
-   ├── Loop: Show → Answer → Log → Feedback
-   ├── End: Calculate metrics
-   ├── RuleEngine: Evaluate & adapt global difficulty
-   ├── Logger: Save question_logs.json & session_logs.json
-   ├── ProgressManager: Update & save game_progress.json
-   └── Check unlock next node
-5. Back to LevelMap
+ChooseMode
+ └── [Fonologis / Visual] → LevelMap
+
+LevelMap
+ └── [Klik Node] → GameSession
+
+GameSession (1 scene, 4 panel)
+ ├── Mode Fonologis → mix Blending + Segmenting (15 soal)
+ └── Mode Visual    → mix Letter Recognition + Spacing (15 soal)
+     └── Selesai → RuleEngine → ProgressManager → kembali ke LevelMap
 ```
 
 ---
 
-## 📊 JSON Structures
+## 🎮 Game Session — 4 Mode Gameplay
 
-### game_progress.json
-```json
-{
-  "currentDifficulty": 3,
-  "phonologyWeight": 0.6,
-  "visualWeight": 0.4,
-  "currentUnlockedNode": 5,
-  "totalSessionsCompleted": 12,
-  "overallAccuracy": 0.78
-}
-```
-
-### phonology_questions.json / visual_questions.json
-```json
-{
-  "difficulty_1": [
-    {
-      "stimulus": "Pilih huruf 'B'",
-      "correctAnswer": "B",
-      "options": ["B", "D", "P", "G"]
-    }
-  ],
-  "difficulty_2": [...],
-  ...
-}
-```
-
-### question_logs.json
-```json
-{
-  "questions": [
-    {
-      "nodeIndex": 2,
-      "difficulty": 3,
-      "questionType": "Phonology",
-      "correct": true,
-      "responseTime": 3.2,
-      "usedHint": false,
-      "timestamp": "2026-02-25T10:32:21"
-    }
-  ]
-}
-```
-
-### session_logs.json
-```json
-{
-  "sessions": [
-    {
-      "nodeIndex": 2,
-      "accuracy": 0.8,
-      "error_rate": 0.2,
-      "phonology_errors": 2,
-      "visual_errors": 1,
-      "difficulty_before": 2,
-      "difficulty_after": 3,
-      "avg_response_time": 4.5,
-      "total_hints_used": 0,
-      "timestamp": "2026-02-25T10:35:00"
-    }
-  ]
-}
-```
+| Mode | Stimulus | Cara Jawab | Panel Script |
+|---|---|---|---|
+| Visual Letter Recognition | Huruf teks besar | Klik huruf yang sama | `VisualLetterPanel` |
+| Visual Spacing Awareness | Kata utuh (BUKU) | Klik ejaan spasi benar | `VisualSpacingPanel` |
+| Fonologis Blending | Audio suku kata auto-play | Klik gambar benda | `FonologisBlendingPanel` |
+| Fonologis Segmenting | Gambar benda | Drag suku kata ke slot urutan | `FonologisSegmentingPanel` |
 
 ---
 
-## 🔧 Unity Setup Requirements
+## 🔧 Unity Scene Setup — GameSession
 
-### GameSession Scene Hierarchy
 ```
-GameSession
+GameSession Scene
 ├── Canvas
-│   ├── Background (Image)
-│   ├── ProgressContainer (HorizontalLayoutGroup)
-│   ├── QuizTitle (TextMeshProUGUI)
-│   ├── QuestionText (TextMeshProUGUI)
-│   ├── AnswerContainer (VerticalLayoutGroup)
-│   └── FeedbackPanel (Panel)
-│       └── FeedbackText (TextMeshProUGUI)
+│   ├── [Shared] ProgressContainer  → slotPrefab
+│   ├── [Shared] QuizTitle          → quizTitleText (TMP)
+│   ├── [Shared] TimerText          → timerText (TMP)
+│   ├── [Shared] FeedbackPanel      → feedbackPanel + feedbackText
+│   ├── [Shared] BackToMapButton
+│   │
+│   ├── Panel_VisualLetter          → VisualLetterPanel.cs
+│   ├── Panel_VisualSpacing         → VisualSpacingPanel.cs
+│   ├── Panel_Blending              → FonologisBlendingPanel.cs
+│   └── Panel_Segmenting            → FonologisSegmentingPanel.cs
+│       ├── SyllableContainer       → tempat suku kata draggable
+│       └── SlotContainer           → tempat slot urutan
+│
 └── Managers (Empty GameObject)
-    └── GameSessionManager (with all manager components)
+    └── GameSessionManager.cs (assign semua 4 panel di Inspector)
 ```
 
-### Prefabs Needed
+### Prefabs yang Dibutuhkan
 ```
 Prefabs/
-├── ProgressSlot.prefab      ✅ (existing) - untuk progress bar
-├── AnswerButton.prefab      ⚠️ (buat baru) - untuk pilihan jawaban
-└── LevelNode.prefab         ✅ (existing) - untuk level map
-```
-
-### Components Assignment (GameSessionManager)
-```
-GameSessionManager:
-  - slotPrefab: ProgressSlot.prefab
-  - progressContainer: ProgressContainer transform
-  - quizTitleText: QuizTitle TMP
-  - questionText: QuestionText TMP
-  - answerContainer: AnswerContainer transform
-  - answerButtonPrefab: AnswerButton.prefab
-  - feedbackPanel: FeedbackPanel gameobject
-  - feedbackText: FeedbackText TMP
-  - totalQuestions: 15
+├── ProgressSlot.prefab      ✅ (existing) — progress bar
+├── AnswerButton.prefab      ⚠️ (buat) — tombol teks jawaban (Visual)
+├── ImageButton.prefab       ⚠️ (buat) — tombol gambar jawaban (Blending)
+├── SyllablePrefab.prefab    ⚠️ (buat) — suku kata draggable (Segmenting)
+├── SlotPrefab.prefab        ⚠️ (buat) — slot kosong (Segmenting)
+└── LevelNode.prefab         ✅ (existing) — level map node
 ```
 
 ---
 
-## 🎯 Testing Checklist
+## 🛠️ Debug Commands (DebugHelper.cs)
 
-### Before First Run
-- [ ] Create AnswerButton.prefab (Button + TMP child)
-- [ ] Assign all references in GameSessionManager
-- [ ] Check Resources folder has JSON files
-- [ ] Verify TextMeshPro installed
-
-### Test Sequence
-1. **First Session**
-   - [ ] Start game, difficulty should be 1
-   - [ ] Complete with high accuracy (>85%)
-   - [ ] Check logs: difficulty should increase to 2
-
-2. **Second Session**
-   - [ ] Questions should be difficulty 2
-   - [ ] Complete with low accuracy (<60%)
-   - [ ] Difficulty should decrease back to 1
-
-3. **Node Unlock**
-   - [ ] Complete session with accuracy >80%
-   - [ ] Next node should unlock
-   - [ ] Check ProgressManager (Debug P key)
-
-4. **Persistence**
-   - [ ] Close game
-   - [ ] Reopen game
-   - [ ] Difficulty & unlocked nodes should persist
-
-### Debug Commands
 ```
-P key = Show current progress
-R key = Reset all progress
-U key = Unlock all nodes
-M key = Set difficulty to max
+P key → Show current progress di Console
+R key → Reset semua progress ke default
+U key → Unlock semua 10 node
+M key → Set difficulty ke max (5)
 ```
 
 ---
 
-## 📱 Build Settings
+## 📱 Build Settings (Android)
 
-### Scenes in Build
 ```
-0. MainMenu
-1. LevelMap
-2. GameSession
-(3. Result - optional)
+Scenes in Build:
+ 0. HomeScreen
+ 1. NewGame
+ 2. OnboardingAge
+ 3. OnboardingGender
+ 4. ContinueGame
+ 5. ChooseMode
+ 6. LevelMap
+ 7. GameSession
+
+Platform: Android
+Min API Level: 21
+Target API Level: 33
+Scripting Backend: IL2CPP
+Architecture: ARM64
+Write Permission: External Storage
 ```
-
-### Platform Settings (Android)
-```
-- Minimum API Level: 21
-- Target API Level: 33
-- IL2CPP
-- ARM64
-- Write permission: External Storage (SD Card)
-```
-
----
-
-## 🚀 Ready for Implementation!
-
-All files created ✅  
-System architecture complete ✅  
-Documentation ready ✅  
-
-**Next:** Setup Unity scene & test!

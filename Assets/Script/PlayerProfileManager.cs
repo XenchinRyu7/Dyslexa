@@ -62,6 +62,9 @@ public class PlayerProfileManager : MonoBehaviour
         // Set as active profile
         ActiveProfile = newProfile;
 
+        // Inisialisasi progress kosong untuk profil baru
+        ProgressManager.Instance.LoadForProfile(newProfile.profileId);
+
         // Save to JSON
         SaveProfiles();
         
@@ -111,6 +114,9 @@ public class PlayerProfileManager : MonoBehaviour
         if (ActiveProfile != null)
         {
             Debug.Log($"[ProfileManager] Active profile selected: {ActiveProfile.playerName}");
+
+            // Load progress khusus profil ini
+            ProgressManager.Instance.LoadForProfile(ActiveProfile.profileId);
         }
     }
 

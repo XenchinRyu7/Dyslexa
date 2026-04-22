@@ -1,301 +1,91 @@
-Dyslexia Therapy Game – Rule-Based Architecture (Phase 1)
-🎯 Project Goal
+# 📖 Dyslexa — Aplikasi Edukasi Disleksia
 
-Build a scalable 2D Android educational game for dyslexia therapy using:
+Dyslexa adalah aplikasi game edukasi berbasis Unity untuk membantu anak-anak penderita disleksia melalui latihan interaktif yang adaptif.
 
-Mixed question sessions (Phonological + Visual)
+---
 
-Rule-based adaptive difficulty (prototype phase)
+## 🎯 Tujuan Aplikasi
 
-Local logging system
+Membantu anak-anak disleksia melatih kemampuan membaca melalui dua jalur latihan utama:
+- **Fonologis** — kesadaran bunyi dan suku kata
+- **Visual** — pengenalan huruf dan kesadaran spasi kata
 
-Single GameSession scene (dynamic content)
+---
 
-Node-based progression system
+## 🧩 Mode Gameplay (4 Mode dalam 1 Scene)
 
-This phase focuses strictly on:
+| Mode | Kategori | Stimulus | Cara Jawab |
+|---|---|---|---|
+| **Visual Letter Recognition** | Visual | Huruf teks besar | Klik huruf yang sama dari 4 pilihan |
+| **Visual Spacing Awareness** | Visual | Kata utuh (BUKU) | Klik ejaan spasi yang benar |
+| **Fonologis Blending** | Fonologis | Audio suku kata (auto-play) | Klik gambar benda yang sesuai |
+| **Fonologis Segmenting** | Fonologis | Gambar benda | Drag suku kata ke slot urutan |
 
-Rule-based adaptive engine
-Clean architecture
-Working code before ML integration
+Saat memilih mode **Fonologis** → 1 sesi berisi 15 soal mix Blending + Segmenting.  
+Saat memilih mode **Visual** → 1 sesi berisi 15 soal mix Letter Recognition + Spacing.
 
-🧠 Core Design Principles
+---
 
-Single GameSession scene
+## 🗺️ Alur Navigasi
 
-Node = Session container (15 mixed questions)
+```
+HomeScreen
+ ├── [New Game] → NewGame → OnboardingAge → OnboardingGender → ChooseMode
+ ├── [Continue] → ContinueGame → (pilih profil) → ChooseMode
+ └── [Settings] → Settings Window → Export Excel / PDF
 
-Adaptive = Rule-based (no ML yet)
+ChooseMode → [Fonologis / Visual] → LevelMap → [Klik Node] → GameSession
+```
 
-Difficulty adjustable
+---
 
-Content weight adjustable (phonology vs visual)
+## 👤 Sistem Profil
 
-Local logging first (JSON)
+- Setiap anak punya profil sendiri (Nama, Umur, Gender)
+- Profil disimpan di `player_profiles.json` (offline, lokal)
+- Profil dipilih dari layar **Continue Game** sebelum bermain
+- Data profil bisa diekspor ke **Excel (CSV)** atau **HTML Report (PDF)** via Settings
 
-UI and logic separated
+---
 
-🏗️ Scene Architecture
-Scenes
-MainMenu
-LevelMap
-GameSession
-Result (optional)
-🎮 GameSession Scene Structure
-GameSession
- ├── Canvas
- │    ├── Background
- │    ├── ProgressContainer
- │    ├── QuizTitle
- │    ├── QuestionText (TMP)
- │    ├── AnswerContainer
- │    └── FeedbackPanel
- │
- └── Managers
-      ├── GameSessionManager
-      ├── QuestionGenerator
-      ├── RuleEngine
-      └── Logger
-🧩 Core System Architecture
-1️⃣ Question Model
-public enum QuestionType
-{
-    Phonology,
-    Visual
-}
-
-public class Question
-{
-    public QuestionType type;
-    public string stimulus;
-    public string correctAnswer;
-    public List<string> options;
-}
-2️⃣ Session Flow
-StartSession()
- → GenerateQuestionSet()
- → Loop 15 Questions:
-      ShowQuestion()
-      WaitAnswer()
-      LogResponse()
- → EndSession()
- → CalculateMetrics()
- → RuleEngine.Evaluate()
- → SaveResults()
-🎲 Question Generation (Mixed by Design)
-
-Each session must ALWAYS be mixed.
-
-Default distribution:
-
-7 phonology
-
-8 visual
-
-Adaptive distribution:
-
-If phonology errors > visual errors:
-
-Increase phonology weight next session
+## 📈 Sistem Adaptive
 
-If visual errors > phonology:
-
-Increase visual weight next session
-
-QuestionGenerator Responsibilities
-
-Generate N phonology questions
-
-Generate N visual questions
-
-Shuffle list
-
-Respect difficulty level
-
-📈 Rule-Based Adaptive Engine
-Input Metrics
+- Difficulty otomatis naik/turun berdasarkan akurasi sesi
+- Jika akurasi ≥ 85% → difficulty naik
+- Jika akurasi < 60% → difficulty turun
+- Node berikutnya unlock jika akurasi ≥ 80%
+- Semua progress tersimpan di `game_progress.json`
 
-From session:
+---
 
-jumlah_benar
-jumlah_salah
-rata_waktu_respons
-kesalahan_fonologis
-kesalahan_visual
-penggunaan_hint
-total_soal
-Derived Metrics
-accuracy = benar / total
-error_rate = salah / total
-hint_rate = hint / total
-fonologis_rate = kesalahan_fonologis / salah
-visual_rate = kesalahan_visual / salah
-Difficulty Adjustment Rules
-if (accuracy >= 0.85f && hint_rate < 0.2f)
-    difficulty++;
-else if (accuracy < 0.6f)
-    difficulty--;
-else
-    difficulty = difficulty;
+## 📁 Struktur Utama
 
-Clamp difficulty between 1–5.
+Lihat [FILE_STRUCTURE.md](FILE_STRUCTURE.md) untuk detail lengkap semua script dan setup Unity.
 
-Content Weight Adjustment
-if (kesalahan_fonologis > kesalahan_visual)
-    phonologyWeight += 0.1f;
-else if (kesalahan_visual > kesalahan_fonologis)
-    visualWeight += 0.1f;
+---
 
-Normalize so total weight = 1.
+## 🛠️ Tech Stack
 
-📊 Logging System (Phase 1)
-Per Question Log
-{
-  "nodeIndex": 2,
-  "difficulty": 1,
-  "questionType": "Phonology",
-  "correct": true,
-  "responseTime": 3.2,
-  "usedHint": false,
-  "timestamp": "2026-02-21T10:32:21"
-}
-Per Session Log
-{
-  "accuracy": 0.8,
-  "error_rate": 0.2,
-  "phonology_errors": 2,
-  "visual_errors": 1,
-  "difficulty_before": 1,
-  "difficulty_after": 2
-}
+- **Engine**: Unity (UI Toolkit: UGUI + TextMeshPro)
+- **Language**: C#
+- **Storage**: JSON (offline, `Application.persistentDataPath`)
+- **Audio**: Unity AudioSource + Resources loader
+- **Platform Target**: Android
 
-Save locally to:
+---
 
-Application.persistentDataPath
-🎯 Difficulty Definition
+## 🚀 Quick Start (Unity Editor)
 
-Difficulty affects:
+1. Buka project di Unity
+2. Tambahkan scene ke Build Settings (urutan: HomeScreen → ... → GameSession)
+3. Pastikan folder `Resources/Images/` dan `Resources/Audio/` sudah berisi asset
+4. Assign semua referensi di Inspector sesuai [FILE_STRUCTURE.md](FILE_STRUCTURE.md)
+5. Tekan Play dari scene `HomeScreen`
 
-Level	Phonology	Visual
-1	Single letter	Clear contrast
-2	Simple syllables	Similar shapes
-3	Words	Confusing pairs
-4	Blends	Rotations
-5	Complex words	Multi-distractor
-🎮 Node System Logic
-
-Node does NOT represent domain.
-
-Node represents:
-
-Session milestone
-
-Difficulty tier
-
-Unlock rule:
-
-If mastery >= 0.8 → unlock next node
-
-Mastery calculated from rolling average accuracy.
-
-🧠 Session State Machine
-public enum SessionState
-{
-    Loading,
-    ShowingQuestion,
-    WaitingAnswer,
-    ShowingFeedback,
-    Finished
-}
-
-No input allowed during feedback.
-
-🎨 Background System
-
-Random background per session
-
-Not per question (avoid distraction)
-
-Minimal design
-
-High contrast center area
-
-📦 Development Phases
-Phase 1 – Core
-
-Question class
-
-Generator
-
-Session loop
-
-Progress bar segmented
-
-Logging basic JSON
-
-RuleEngine basic
-
-Phase 2 – Stability
-
-Prevent spam input
-
-Feedback animation
-
-Better logging structure
-
-Phase 3 – ML Preparation
-
-Structured dataset export
-
-CSV export
-
-Confusion matrix tracking
-
-❌ What NOT To Do
-
-Do NOT create separate scenes per domain
-
-Do NOT hardcode 15 questions in scene
-
-Do NOT mix UI logic with rule engine
-
-Do NOT change background per question
-
-Do NOT overcomplicate before alpha test
-
-🎓 Research Positioning
-
-This system qualifies as:
-
-Rule-based adaptive learning system prototype
-Baseline adaptive mechanism before ML integration
-
-ML phase will use collected dataset from 30 children.
-
-🚀 Immediate Next Implementation Steps
-
-Implement Question class
-
-Implement QuestionGenerator
-
-Implement Session loop (15 questions)
-
-Implement basic RuleEngine
-
-Implement JSON logging
-
-Connect to LevelMap unlock logic
-
-🔥 Final Goal of This Phase
-
-Have a fully playable:
-
-Mixed session
-
-Adaptive difficulty
-
-Logging enabled
-
-Stable for alpha testing
-
-Before ML.
+### Debug Keys (saat Play Mode)
+```
+P → Tampilkan progress saat ini di Console
+R → Reset semua progress
+U → Unlock semua node
+M → Set difficulty ke maksimum (5)
+```

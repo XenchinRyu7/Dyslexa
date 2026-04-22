@@ -34,6 +34,11 @@ public class MainNavigation : MonoBehaviour
         SceneManager.LoadScene("ChooseMode");
     }
 
+    public void LoadLevelMap()
+    {
+        SceneManager.LoadScene("LevelMap");
+    }
+
     public void ReloadCurrentScene()
     {
         Scene currentScene = SceneManager.GetActiveScene();
