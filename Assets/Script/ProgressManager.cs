@@ -4,12 +4,17 @@ using System.IO;
 [System.Serializable]
 public class GameProgress
 {
-    public int currentDifficulty = 1;
-    public float phonologyWeight = 0.5f;
-    public float visualWeight = 0.5f;
-    public int currentUnlockedNode = 0;
-    public int totalSessionsCompleted = 0;
-    public float overallAccuracy = 0f;
+    // Progress per mode — Visual dan Fonologis independen
+    public int unlockedNodeVisual    = 0;
+    public int unlockedNodeFonologis = 0;
+    public int difficultyVisual      = 1;
+    public int difficultyFonologis   = 1;
+
+    // Data bersama
+    public float phonologyWeight        = 0.5f;
+    public float visualWeight           = 0.5f;
+    public int   totalSessionsCompleted = 0;
+    public float overallAccuracy        = 0f;
 }
 
 public class ProgressManager : MonoBehaviour
@@ -76,7 +81,7 @@ public class ProgressManager : MonoBehaviour
             {
                 string json = File.ReadAllText(saveFilePath);
                 progress = JsonUtility.FromJson<GameProgress>(json);
-                Debug.Log($"[ProgressManager] Loaded progress: Difficulty={progress.currentDifficulty}, Unlocked={progress.currentUnlockedNode}");
+                Debug.Log($"[ProgressManager] Loaded: V-diff={progress.difficultyVisual} F-diff={progress.difficultyFonologis} V-node={progress.unlockedNodeVisual} F-node={progress.unlockedNodeFonologis}");
             }
             catch (System.Exception e)
             {
@@ -98,7 +103,7 @@ public class ProgressManager : MonoBehaviour
         {
             string json = JsonUtility.ToJson(progress, true);
             File.WriteAllText(saveFilePath, json);
-            Debug.Log($"[ProgressManager] Progress saved: Difficulty={progress.currentDifficulty}");
+            Debug.Log($"[ProgressManager] Progress saved.");
         }
         catch (System.Exception e)
         {
@@ -108,12 +113,13 @@ public class ProgressManager : MonoBehaviour
 
     public int GetCurrentDifficulty()
     {
-        return progress.currentDifficulty;
+        return IsFonologis() ? progress.difficultyFonologis : progress.difficultyVisual;
     }
 
     public void SetCurrentDifficulty(int difficulty)
     {
-        progress.currentDifficulty = Mathf.Clamp(difficulty, 1, 5);
+        if (IsFonologis()) progress.difficultyFonologis   = UnityEngine.Mathf.Clamp(difficulty, 1, 5);
+        else               progress.difficultyVisual      = UnityEngine.Mathf.Clamp(difficulty, 1, 5);
         SaveProgress();
     }
 
@@ -136,14 +142,18 @@ public class ProgressManager : MonoBehaviour
 
     public int GetCurrentUnlockedNode()
     {
-        return progress.currentUnlockedNode;
+        return IsFonologis() ? progress.unlockedNodeFonologis : progress.unlockedNodeVisual;
     }
 
     public void SetCurrentUnlockedNode(int nodeIndex)
     {
-        progress.currentUnlockedNode = nodeIndex;
+        if (IsFonologis()) progress.unlockedNodeFonologis = nodeIndex;
+        else               progress.unlockedNodeVisual    = nodeIndex;
         SaveProgress();
     }
+
+    private static bool IsFonologis()
+        => UnityEngine.PlayerPrefs.GetString("SelectedGameMode", "Visual") == "Fonologis";
 
     public void UpdateSessionStats(SessionMetrics metrics)
     {

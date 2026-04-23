@@ -37,13 +37,15 @@ public class DebugHelper : MonoBehaviour
         GameProgress progress = ProgressManager.Instance.GetProgress();
         
         Debug.Log("========== GAME PROGRESS ==========");
-        Debug.Log($"Current Difficulty: {progress.currentDifficulty}/5");
-        Debug.Log($"Phonology Weight: {progress.phonologyWeight:P0}");
-        Debug.Log($"Visual Weight: {progress.visualWeight:P0}");
-        Debug.Log($"Unlocked Node: {progress.currentUnlockedNode}");
-        Debug.Log($"Sessions Completed: {progress.totalSessionsCompleted}");
-        Debug.Log($"Overall Accuracy: {progress.overallAccuracy:P0}");
-        Debug.Log($"Save Path: {Application.persistentDataPath}");
+        Debug.Log($"Difficulty Visual:     {progress.difficultyVisual}/5");
+        Debug.Log($"Difficulty Fonologis:  {progress.difficultyFonologis}/5");
+        Debug.Log($"Phonology Weight:      {progress.phonologyWeight:P0}");
+        Debug.Log($"Visual Weight:         {progress.visualWeight:P0}");
+        Debug.Log($"Unlocked Visual:       {progress.unlockedNodeVisual}");
+        Debug.Log($"Unlocked Fonologis:    {progress.unlockedNodeFonologis}");
+        Debug.Log($"Sessions Completed:    {progress.totalSessionsCompleted}");
+        Debug.Log($"Overall Accuracy:      {progress.overallAccuracy:P0}");
+        Debug.Log($"Save Path:             {Application.persistentDataPath}");
         Debug.Log("===================================");
     }
 

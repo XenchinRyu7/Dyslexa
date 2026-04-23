@@ -103,6 +103,20 @@ public class DraggableSyllable : MonoBehaviour,
         gameObject.SetActive(true);
     }
 
+    /// <summary>
+    /// Tile di-drop ke slot: kembali ke parent asli tapi disembunyikan.
+    /// Teks ditampilkan di slot, bukan tile-nya yang dipindah.
+    /// </summary>
+    public void HideFromBank()
+    {
+        // Kembalikan ke parent asli (posisi tetap benar di layout)
+        transform.SetParent(originalParent, true);
+        transform.SetSiblingIndex(originalSibling);
+        cg.alpha          = 1f;
+        cg.blocksRaycasts = true;
+        gameObject.SetActive(false); // ← sembunyikan dari bank
+    }
+
     public void PlayAudio()
     {
         if (string.IsNullOrEmpty(audioPath) || audioSource == null) return;

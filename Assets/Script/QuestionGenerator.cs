@@ -42,55 +42,60 @@ public class QuestionGenerator : MonoBehaviour
 
     // =============================================
     // BANK SOAL — FONOLOGIS BLENDING
-    // { audioPath, correctImagePath, distractor1, distractor2, distractor3 }
-    // gambar di: Resources/Image/Blending/
-    // audio ada: sound_buku, sound_bola, sound_gula (sisanya "" untuk sementara)
+    // Format: { correctImagePath, string[] syllableAudios, distractor1, distractor2, distractor3 }
+    // Gambar di:  Resources/Image/Segmenting/
+    // Audio di:   Resources/Audio/Blending/{Kata}/{suku}.mp3
     // =============================================
-    private static readonly string[][] blendingBank = new string[][]
+    private static readonly object[][] blendingBank = new object[][]
     {
-        // Format: { audio, correct, wrong1, wrong2, wrong3 }
-        new string[] { "Audio/sound_buku",  "Image/Blending/book",        "Image/Blending/table",       "Image/Blending/dice",      "Image/Blending/shirt"      }, // BUKU
-        new string[] { "",                  "Image/Blending/bread",       "Image/Blending/sugar",       "Image/Blending/hayballe",  "Image/Blending/shirt"      }, // ROTI
-        new string[] { "",                  "Image/Blending/cow",         "Image/Blending/horse",       "Image/Blending/deer",      "Image/Blending/spider"     }, // SAPI
-        new string[] { "",                  "Image/Blending/deer",        "Image/Blending/horse",       "Image/Blending/cow",       "Image/Blending/spider"     }, // RUSA
-        new string[] { "",                  "Image/Blending/dice",        "Image/Blending/book",        "Image/Blending/soccer_ball","Image/Blending/table"     }, // DADU
-        new string[] { "",                  "Image/Blending/earth",       "Image/Blending/hayballe",    "Image/Blending/book",      "Image/Blending/table"      }, // BUMI
-        new string[] { "",                  "Image/Blending/eyes",        "Image/Blending/tooth",       "Image/Blending/shirt",     "Image/Blending/book"       }, // MATA
-        new string[] { "",                  "Image/Blending/hayballe",    "Image/Blending/earth",       "Image/Blending/book",      "Image/Blending/table"      }, // JERAMI
-        new string[] { "",                  "Image/Blending/horse",       "Image/Blending/cow",         "Image/Blending/deer",      "Image/Blending/spider"     }, // KUDA
-        new string[] { "",                  "Image/Blending/shirt",       "Image/Blending/book",        "Image/Blending/eyes",      "Image/Blending/tooth"      }, // BAJU
-        new string[] { "Audio/sound_bola",  "Image/Blending/soccer_ball", "Image/Blending/dice",        "Image/Blending/earth",     "Image/Blending/table"      }, // BOLA
-        new string[] { "",                  "Image/Blending/spider",      "Image/Blending/cow",         "Image/Blending/horse",     "Image/Blending/deer"       }, // LABA-LABA
-        new string[] { "Audio/sound_gula",  "Image/Blending/sugar",       "Image/Blending/bread",       "Image/Blending/shirt",     "Image/Blending/book"       }, // GULA
-        new string[] { "",                  "Image/Blending/table",       "Image/Blending/book",        "Image/Blending/dice",      "Image/Blending/earth"      }, // MEJA
-        new string[] { "",                  "Image/Blending/tooth",       "Image/Blending/eyes",        "Image/Blending/shirt",     "Image/Blending/sugar"      }, // GIGI
+        new object[] { "Image/Segmenting/soccer_ball", new string[]{"Audio/Blending/Bola/bo",  "Audio/Blending/Bola/la"},                                "Image/Segmenting/hat",      "Image/Segmenting/horse",   "Image/Segmenting/table"    }, // BOLA
+        new object[] { "Image/Segmenting/bread",       new string[]{"Audio/Blending/Roti/ro",  "Audio/Blending/Roti/ti"},                                "Image/Segmenting/broom",    "Image/Segmenting/hat",     "Image/Segmenting/armchair" }, // ROTI
+        new object[] { "Image/Segmenting/horse",       new string[]{"Audio/Blending/Kuda/ku",  "Audio/Blending/Kuda/da"},                                "Image/Segmenting/cat",      "Image/Segmenting/chicken", "Image/Segmenting/fish"     }, // KUDA
+        new object[] { "Image/Segmenting/eyes",        new string[]{"Audio/Blending/Mata/ma",  "Audio/Blending/Mata/ta"},                                "Image/Segmenting/door",     "Image/Segmenting/fish",    "Image/Segmenting/hat"      }, // MATA
+        new object[] { "Image/Segmenting/table",       new string[]{"Audio/Blending/Meja/me",  "Audio/Blending/Meja/ja"},                                "Image/Segmenting/soccer_ball","Image/Segmenting/bread", "Image/Segmenting/armchair" }, // MEJA
+        new object[] { "Image/Segmenting/shirt",       new string[]{"Audio/Blending/Baju/ba",  "Audio/Blending/Baju/ju"},                                "Image/Segmenting/hat",      "Image/Segmenting/broom",   "Image/Segmenting/bread"    }, // BAJU
+        new object[] { "Image/Segmenting/home",        new string[]{"Audio/Blending/Rumah/rum","Audio/Blending/Rumah/ah"},                               "Image/Segmenting/door",     "Image/Segmenting/armchair","Image/Segmenting/table"    }, // RUMAH
+        new object[] { "Image/Segmenting/fish",        new string[]{"Audio/Blending/Ikan/ik",  "Audio/Blending/Ikan/an"},                                "Image/Segmenting/chicken",  "Image/Segmenting/cat",     "Image/Segmenting/horse"    }, // IKAN
+        new object[] { "Image/Segmenting/armchair",    new string[]{"Audio/Blending/Kursi/kur","Audio/Blending/Kursi/si"},                               "Image/Segmenting/table",    "Image/Segmenting/door",    "Image/Segmenting/home"     }, // KURSI
+        new object[] { "Image/Segmenting/car",         new string[]{"Audio/Blending/Mobil/mo", "Audio/Blending/Mobil/bil"},                              "Image/Segmenting/horse",    "Image/Segmenting/soccer_ball","Image/Segmenting/door"  }, // MOBIL
+        new object[] { "Image/Segmenting/door",        new string[]{"Audio/Blending/Pintu/pin","Audio/Blending/Pintu/tu"},                               "Image/Segmenting/home",     "Image/Segmenting/armchair","Image/Segmenting/table"    }, // PINTU
+        new object[] { "Image/Segmenting/broom",       new string[]{"Audio/Blending/Sapu/sa",  "Audio/Blending/Sapu/pu"},                                "Image/Segmenting/bread",    "Image/Segmenting/shirt",   "Image/Segmenting/hat"      }, // SAPU
+        new object[] { "Image/Segmenting/chicken",     new string[]{"Audio/Blending/Ayam/ay",  "Audio/Blending/Ayam/yam"},                               "Image/Segmenting/fish",     "Image/Segmenting/cat",     "Image/Segmenting/horse"    }, // AYAM
+        new object[] { "Image/Segmenting/hat",         new string[]{"Audio/Blending/Topi/to",  "Audio/Blending/Topi/pi"},                                "Image/Segmenting/shirt",    "Image/Segmenting/broom",   "Image/Segmenting/bread"    }, // TOPI
+        new object[] { "Image/Segmenting/cat",         new string[]{"Audio/Blending/Kucing/ku","Audio/Blending/Kucing/ci","Audio/Blending/Kucing/ng"},   "Image/Segmenting/horse",    "Image/Segmenting/chicken", "Image/Segmenting/fish"     }, // KUCING
+        new object[] { "Image/Segmenting/camera",      new string[]{"Audio/Blending/Kamera/ka","Audio/Blending/Kamera/me","Audio/Blending/Kamera/ra"},  "Image/Segmenting/car",      "Image/Segmenting/home",    "Image/Segmenting/table"    }, // KAMERA
     };
+
+
 
     // =============================================
     // BANK SOAL — FONOLOGIS SEGMENTING
     // { imagePath, correct[], allSyllables[], audioPerSuku[] }
     // gambar di: Resources/Image/Segmenting/
-    // hanya kata 2 suku kata (panel punya 2 slot)
+    // audio di:  Resources/Audio/Segmenting/{KATA}/{suku}.mp3
     // =============================================
     private static readonly object[][] segmentingBank = new object[][]
     {
-        // { "Image/Segmenting/file", correct[], all[] (correct+distractor), audio[] }
-        new object[] { "Image/Segmenting/soccer_ball", new string[]{"BO","LA"},   new string[]{"BO","LA","MA"},   new string[]{"","",""} }, // BOLA
-        new object[] { "Image/Segmenting/bread",       new string[]{"RO","TI"},   new string[]{"RO","TI","BI"},   new string[]{"","",""} }, // ROTI
-        new object[] { "Image/Segmenting/home",        new string[]{"RU","MAH"},  new string[]{"RU","MAH","BAH"}, new string[]{"","",""} }, // RUMAH
-        new object[] { "Image/Segmenting/cat",         new string[]{"KU","CING"}, new string[]{"KU","CING","SING"},new string[]{"","",""} }, // KUCING
-        new object[] { "Image/Segmenting/fish",        new string[]{"I","KAN"},   new string[]{"I","KAN","PAN"},  new string[]{"","",""} }, // IKAN
-        new object[] { "Image/Segmenting/door",        new string[]{"PIN","TU"},  new string[]{"PIN","TU","DU"},  new string[]{"","",""} }, // PINTU
-        new object[] { "Image/Segmenting/eyes",        new string[]{"MA","TA"},   new string[]{"MA","TA","DA"},   new string[]{"","",""} }, // MATA
-        new object[] { "Image/Segmenting/shirt",       new string[]{"BA","JU"},   new string[]{"BA","JU","MU"},   new string[]{"","",""} }, // BAJU
-        new object[] { "Image/Segmenting/armchair",    new string[]{"KUR","SI"},  new string[]{"KUR","SI","NI"},  new string[]{"","",""} }, // KURSI
-        new object[] { "Image/Segmenting/table",       new string[]{"ME","JA"},   new string[]{"ME","JA","MI"},   new string[]{"","",""} }, // MEJA
-        new object[] { "Image/Segmenting/broom",       new string[]{"SA","PU"},   new string[]{"SA","PU","BU"},   new string[]{"","",""} }, // SAPU
-        new object[] { "Image/Segmenting/chicken",     new string[]{"A","YAM"},   new string[]{"A","YAM","LAM"},  new string[]{"","",""} }, // AYAM
-        new object[] { "Image/Segmenting/hat",         new string[]{"TO","PI"},   new string[]{"TO","PI","BI"},   new string[]{"","",""} }, // TOPI
-        new object[] { "Image/Segmenting/horse",       new string[]{"KU","DA"},   new string[]{"KU","DA","MA"},   new string[]{"","",""} }, // KUDA
-        new object[] { "Image/Segmenting/car",         new string[]{"MO","BIL"},  new string[]{"MO","BIL","NIL"}, new string[]{"","",""} }, // MOBIL
+        // === KATA DENGAN AUDIO ===
+        new object[] { "Image/Segmenting/soccer_ball", new string[]{"BO","LA"},   new string[]{"BO","LA","LU"},   new string[]{"Audio/Segmenting/BOLA/bo", "Audio/Segmenting/BOLA/la", "Audio/Segmenting/BOLA/lu"} }, // BOLA
+        new object[] { "Image/Segmenting/bread",       new string[]{"RO","TI"},   new string[]{"RO","TI","TU"},   new string[]{"Audio/Segmenting/ROTI/ro", "Audio/Segmenting/ROTI/ti", "Audio/Segmenting/ROTI/tu"} }, // ROTI
+        new object[] { "Image/Segmenting/horse",       new string[]{"KU","DA"},   new string[]{"KU","DA","DO"},   new string[]{"Audio/Segmenting/KUDA/ku", "Audio/Segmenting/KUDA/da", "Audio/Segmenting/KUDA/do"} }, // KUDA
+        new object[] { "Image/Segmenting/eyes",        new string[]{"MA","TA"},   new string[]{"MA","TA","TU"},   new string[]{"Audio/Segmenting/MATA/ma", "Audio/Segmenting/MATA/ta", "Audio/Segmenting/MATA/tu"} }, // MATA
+        new object[] { "Image/Segmenting/table",       new string[]{"ME","JA"},   new string[]{"ME","JA","JO"},   new string[]{"Audio/Segmenting/MEJA/me", "Audio/Segmenting/MEJA/ja", "Audio/Segmenting/MEJA/jo"} }, // MEJA
+        new object[] { "Image/Segmenting/shirt",       new string[]{"BA","JU"},   new string[]{"BA","JU","JA"},   new string[]{"Audio/Segmenting/BAJU/ba", "Audio/Segmenting/BAJU/ju", "Audio/Segmenting/BAJU/ja"} }, // BAJU
+
+        // === KATA TANPA AUDIO (audio menyusul) ===
+        new object[] { "Image/Segmenting/home",     new string[]{"RU","MAH"},  new string[]{"RU","MAH","BAH"}, new string[]{"","",""} }, // RUMAH
+        new object[] { "Image/Segmenting/cat",      new string[]{"KU","CING"}, new string[]{"KU","CING","SING"},new string[]{"","",""} }, // KUCING
+        new object[] { "Image/Segmenting/fish",     new string[]{"I","KAN"},   new string[]{"I","KAN","PAN"},  new string[]{"","",""} }, // IKAN
+        new object[] { "Image/Segmenting/door",     new string[]{"PIN","TU"},  new string[]{"PIN","TU","DU"},  new string[]{"","",""} }, // PINTU
+        new object[] { "Image/Segmenting/armchair", new string[]{"KUR","SI"},  new string[]{"KUR","SI","NI"},  new string[]{"","",""} }, // KURSI
+        new object[] { "Image/Segmenting/broom",    new string[]{"SA","PU"},   new string[]{"SA","PU","BU"},   new string[]{"","",""} }, // SAPU
+        new object[] { "Image/Segmenting/chicken",  new string[]{"A","YAM"},   new string[]{"A","YAM","LAM"},  new string[]{"","",""} }, // AYAM
+        new object[] { "Image/Segmenting/hat",      new string[]{"TO","PI"},   new string[]{"TO","PI","BI"},   new string[]{"","",""} }, // TOPI
+        new object[] { "Image/Segmenting/car",      new string[]{"MO","BIL"},  new string[]{"MO","BIL","NIL"}, new string[]{"","",""} }, // MOBIL
     };
+
 
     // =============================================
     // PUBLIC: GENERATE QUESTION SET
@@ -222,17 +227,22 @@ public class QuestionGenerator : MonoBehaviour
     // =============================================
     private Question GenerateBlendingQuestion(int difficulty)
     {
-        // Difficulty tinggi → pilih dari semua bank, rendah → beberapa pertama
-        int poolEnd = difficulty <= 2 ? 4 : blendingBank.Length;
-        string[] entry = blendingBank[Random.Range(0, Mathf.Min(poolEnd, blendingBank.Length))];
+        int poolEnd = difficulty <= 2 ? 6 : blendingBank.Length;
+        object[] entry = blendingBank[Random.Range(0, Mathf.Min(poolEnd, blendingBank.Length))];
 
-        string audioPath  = entry[0];
-        string correctImg = entry[1];
+        string   correctImg    = (string)entry[0];
+        string[] syllableAudio = (string[])entry[1];
+        string   distractor1   = (string)entry[2];
+        string   distractor2   = (string)entry[3];
+        string   distractor3   = (string)entry[4];
 
-        List<string> imageOptions = new List<string> { correctImg, entry[2], entry[3], entry[4] };
+        List<string> imageOptions = new List<string> { correctImg, distractor1, distractor2, distractor3 };
         ShuffleList(imageOptions);
 
-        return new Question(QuestionType.PhonologyBlending, audioPath, correctImg, imageOptions);
+        // audioClipName tidak dipakai lagi — audio dieja via syllableAudios
+        Question q = new Question(QuestionType.PhonologyBlending, "", correctImg, imageOptions);
+        q.syllableAudios = syllableAudio;
+        return q;
     }
 
     // =============================================

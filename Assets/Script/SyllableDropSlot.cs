@@ -4,9 +4,10 @@ using UnityEngine.EventSystems;
 using TMPro;
 
 /// <summary>
-/// Attach ke setiap slot (AnswerContainer1/2).
-/// Terima drop dari DraggableSyllable.
-/// Tap slot terisi → suku kata balik ke bank.
+/// Attach ke AnswerContainer1/2 (dock slot).
+/// Drop tile → slot tampilkan TEXT suku kata, tile di-hide dari bank.
+/// Tap slot terisi → tile kembali muncul di bank, slot kembali kosong.
+/// Butuh Image component (Raycast Target ON) agar OnDrop bisa fire.
 /// </summary>
 public class SyllableDropSlot : MonoBehaviour, IDropHandler, IPointerClickHandler
 {
@@ -15,41 +16,42 @@ public class SyllableDropSlot : MonoBehaviour, IDropHandler, IPointerClickHandle
 
     private DraggableSyllable occupant;
     private TextMeshProUGUI   slotLabel;
-    private Image             bg;
-
-    // Warna slot kosong vs terisi
-    private static readonly Color colorEmpty  = new Color(1f, 1f, 1f, 0.3f);
-    private static readonly Color colorFilled = new Color(0.3f, 0.8f, 0.3f, 0.8f);
 
     void Awake()
     {
+        // Cari TMP child untuk menampilkan teks suku kata
         slotLabel = GetComponentInChildren<TextMeshProUGUI>();
-        bg        = GetComponent<Image>();
         SetVisualEmpty();
     }
 
-    public bool   IsOccupied      => occupant != null;
+    public bool   IsOccupied       => occupant != null;
     public string GetSyllableText() => occupant?.syllableText;
 
-    // ── DROP ────────────────────────────────────────
+    // ── DROP → tampilkan teks, hide tile dari bank ──────
 
     public void OnDrop(PointerEventData e)
     {
         DraggableSyllable dragged = e.pointerDrag?.GetComponent<DraggableSyllable>();
         if (dragged == null) return;
 
-        // Kalau slot sudah terisi, kembalikan occupant dulu ke bank
+        // Kalau slot sudah terisi, kembalikan tile lama ke bank dulu
         if (occupant != null)
         {
             occupant.ReturnToBank();
             occupant = null;
         }
 
-        // Tempatkan tile di slot
-        PlaceSyllable(dragged);
+        // Simpan referensi tile, tampilkan teks, sembunyikan tile dari bank
+        occupant = dragged;
+        dragged.HideFromBank();
+
+        if (slotLabel != null) slotLabel.text = dragged.syllableText;
+        SetVisualFilled();
+
+        panel?.OnSlotFilled(slotIndex, dragged.syllableText);
     }
 
-    // ── TAP SLOT TERISI → kembali ke bank ──────────
+    // ── TAP SLOT TERISI → tile balik ke bank ────────────
 
     public void OnPointerClick(PointerEventData e)
     {
@@ -57,47 +59,38 @@ public class SyllableDropSlot : MonoBehaviour, IDropHandler, IPointerClickHandle
 
         DraggableSyllable toReturn = occupant;
         occupant = null;
+
+        if (slotLabel != null) slotLabel.text = "";
         SetVisualEmpty();
+
         toReturn.ReturnToBank();
         panel?.OnSlotCleared(slotIndex);
     }
 
-    // ── INTERNAL ─────────────────────────────────────
-
-    private void PlaceSyllable(DraggableSyllable tile)
-    {
-        occupant = tile;
-
-        // Pindahkan tile ke dalam slot secara visual
-        RectTransform tileRt = tile.GetComponent<RectTransform>();
-        tile.transform.SetParent(transform, false);
-        tileRt.anchoredPosition   = Vector2.zero;
-        tileRt.anchorMin          = Vector2.zero;
-        tileRt.anchorMax          = Vector2.one;
-        tileRt.offsetMin          = Vector2.zero;
-        tileRt.offsetMax          = Vector2.zero;
-        tile.GetComponent<CanvasGroup>().blocksRaycasts = true;
-        tile.GetComponent<CanvasGroup>().alpha          = 1f;
-
-        SetVisualFilled(tile.syllableText);
-        panel?.OnSlotFilled(slotIndex, tile.syllableText);
-    }
-
-    private void SetVisualEmpty()
-    {
-        if (bg        != null) bg.color        = colorEmpty;
-        if (slotLabel != null) slotLabel.text  = "";
-    }
-
-    private void SetVisualFilled(string text)
-    {
-        if (bg        != null) bg.color        = colorFilled;
-        if (slotLabel != null) slotLabel.text  = text;
-    }
+    // ── PUBLIC CLEAR (dipanggil saat soal baru) ──────────
 
     public void Clear()
     {
-        occupant = null;
+        if (occupant != null)
+        {
+            occupant.ReturnToBank();
+            occupant = null;
+        }
+        if (slotLabel != null) slotLabel.text = "";
         SetVisualEmpty();
+    }
+
+    // ── VISUAL ──────────────────────────────────────────
+
+    private void SetVisualEmpty()
+    {
+        Image bg = GetComponent<Image>();
+        if (bg != null) bg.color = new Color(1f, 1f, 1f, 0.2f);
+    }
+
+    private void SetVisualFilled()
+    {
+        Image bg = GetComponent<Image>();
+        if (bg != null) bg.color = new Color(0.3f, 0.85f, 0.4f, 0.85f);
     }
 }
