@@ -1320,7 +1320,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 214984822}
         m_TargetAssemblyTypeName: MainNavigation, Assembly-CSharp
-        m_MethodName: LoadMainMenu
+        m_MethodName: LoadChooseMode
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

@@ -1572,8 +1572,8 @@ MonoBehaviour:
   prefabVisualLetter: {fileID: 5577557152120691223, guid: 494a82dc87da3a84ea983c13d62c176e, type: 3}
   prefabVisualSpacing: {fileID: 7041589531252401284, guid: a371c5760a81af94498a3752200a54d6, type: 3}
   prefabBlending: {fileID: 213541217835078449, guid: 2c3f3c25a0371694baf8e5b3d911bb25, type: 3}
-  prefabSegmenting: {fileID: 1359508505233432597, guid: 8397f08ee86ff0241812b3150d7a7d7f, type: 3}
-  panelParent: {fileID: 0}
+  prefabSegmenting: {fileID: 8590710789785104573, guid: 8397f08ee86ff0241812b3150d7a7d7f, type: 3}
+  panelParent: {fileID: 229603489}
   totalQuestions: 15
   nodeIndex: 0
 --- !u!1660057539 &9223372036854775807

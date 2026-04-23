@@ -239,8 +239,9 @@ public class QuestionGenerator : MonoBehaviour
         List<string> imageOptions = new List<string> { correctImg, distractor1, distractor2, distractor3 };
         ShuffleList(imageOptions);
 
-        // audioClipName tidak dipakai lagi — audio dieja via syllableAudios
-        Question q = new Question(QuestionType.PhonologyBlending, "", correctImg, imageOptions);
+        // PENTING: pass 5 arg agar C# pakai constructor Blending, bukan Visual!
+        // Kalau 4 arg → C# pakai constructor Visual (exact match) → imageOptions kosong!
+        Question q = new Question(QuestionType.PhonologyBlending, "", correctImg, imageOptions, "");
         q.syllableAudios = syllableAudio;
         return q;
     }
@@ -258,15 +259,25 @@ public class QuestionGenerator : MonoBehaviour
         string[] allSyllables     = (string[])entry[2];
         string[] syllableAudios   = (string[])entry[3];
 
-        List<string> shuffled = new List<string>(allSyllables);
-        ShuffleList(shuffled);
+        // Shuffle index BERSAMA supaya text dan audio tetap sinkron
+        List<int> indices = new List<int>();
+        for (int i = 0; i < allSyllables.Length; i++) indices.Add(i);
+        ShuffleList(indices);
+
+        string[] shuffledSyl   = new string[allSyllables.Length];
+        string[] shuffledAudio = new string[syllableAudios.Length];
+        for (int i = 0; i < indices.Count; i++)
+        {
+            shuffledSyl[i]   = allSyllables[indices[i]];
+            shuffledAudio[i] = syllableAudios[indices[i]];
+        }
 
         return new Question(
             QuestionType.PhonologySegmenting,
             imagePath,
             correctSyllables,
-            shuffled.ToArray(),
-            syllableAudios
+            shuffledSyl,
+            shuffledAudio
         );
     }
 
