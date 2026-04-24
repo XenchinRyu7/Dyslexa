@@ -5,7 +5,7 @@ using TMPro;
 
 /// <summary>
 /// Attach ke setiap BtnSound di bank suku kata.
-/// Drag → pindah ke slot. Tap (tanpa drag) → play audio.
+/// Drag ke slot. Tap (tanpa drag) = play audio.
 /// </summary>
 [RequireComponent(typeof(CanvasGroup))]
 public class DraggableSyllable : MonoBehaviour,
@@ -17,7 +17,7 @@ public class DraggableSyllable : MonoBehaviour,
     [HideInInspector] public FonologisSegmentingPanel panel;
     [HideInInspector] public int bankIndex;
 
-    private Canvas       rootCanvas;
+    private Canvas        rootCanvas;
     private RectTransform rt;
     private CanvasGroup   cg;
 
@@ -45,7 +45,6 @@ public class DraggableSyllable : MonoBehaviour,
         TextMeshProUGUI tmp = GetComponentInChildren<TextMeshProUGUI>();
         if (tmp != null) tmp.text = text;
 
-        // Cari root canvas (yang paling atas)
         Canvas[] canvases = GetComponentsInParent<Canvas>(true);
         foreach (Canvas c in canvases)
             if (c.isRootCanvas) { rootCanvas = c; break; }
@@ -53,21 +52,16 @@ public class DraggableSyllable : MonoBehaviour,
             rootCanvas = canvases[canvases.Length - 1];
     }
 
-    // ── DRAG ────────────────────────────────────────
-
     public void OnBeginDrag(PointerEventData e)
     {
-        isDragging = true;
-
+        isDragging      = true;
         originalParent  = transform.parent;
         originalPos     = rt.anchoredPosition;
         originalSibling = transform.GetSiblingIndex();
 
-        // Angkat ke root canvas supaya render di atas semua
         transform.SetParent(rootCanvas.transform, true);
-
         cg.alpha          = 0.75f;
-        cg.blocksRaycasts = false; // biar slot bisa nerima raycast
+        cg.blocksRaycasts = false;
     }
 
     public void OnDrag(PointerEventData e)
@@ -78,20 +72,14 @@ public class DraggableSyllable : MonoBehaviour,
     public void OnEndDrag(PointerEventData e)
     {
         isDragging = false;
-
-        // Kalau tidak di-drop ke slot yang valid, balik ke bank
         if (transform.parent == rootCanvas.transform)
             ReturnToBank();
     }
-
-    // ── CLICK (tap tanpa drag = play audio) ─────────
 
     public void OnPointerClick(PointerEventData e)
     {
         if (!isDragging) PlayAudio();
     }
-
-    // ── PUBLIC ──────────────────────────────────────
 
     public void ReturnToBank()
     {
@@ -103,18 +91,13 @@ public class DraggableSyllable : MonoBehaviour,
         gameObject.SetActive(true);
     }
 
-    /// <summary>
-    /// Tile di-drop ke slot: kembali ke parent asli tapi disembunyikan.
-    /// Teks ditampilkan di slot, bukan tile-nya yang dipindah.
-    /// </summary>
     public void HideFromBank()
     {
-        // Kembalikan ke parent asli (posisi tetap benar di layout)
         transform.SetParent(originalParent, true);
         transform.SetSiblingIndex(originalSibling);
         cg.alpha          = 1f;
         cg.blocksRaycasts = true;
-        gameObject.SetActive(false); // ← sembunyikan dari bank
+        gameObject.SetActive(false);
     }
 
     public void PlayAudio()

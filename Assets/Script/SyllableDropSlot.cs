@@ -7,7 +7,7 @@ using TMPro;
 /// Attach ke AnswerContainer1/2 (dock slot).
 /// Drop tile → slot tampilkan TEXT suku kata, tile di-hide dari bank.
 /// Tap slot terisi → tile kembali muncul di bank, slot kembali kosong.
-/// Butuh Image component (Raycast Target ON) agar OnDrop bisa fire.
+/// Image component harus ada dengan Raycast Target = ON.
 /// </summary>
 public class SyllableDropSlot : MonoBehaviour, IDropHandler, IPointerClickHandler
 {
@@ -19,7 +19,6 @@ public class SyllableDropSlot : MonoBehaviour, IDropHandler, IPointerClickHandle
 
     void Awake()
     {
-        // Cari TMP child untuk menampilkan teks suku kata
         slotLabel = GetComponentInChildren<TextMeshProUGUI>();
         SetVisualEmpty();
     }
@@ -27,21 +26,17 @@ public class SyllableDropSlot : MonoBehaviour, IDropHandler, IPointerClickHandle
     public bool   IsOccupied       => occupant != null;
     public string GetSyllableText() => occupant?.syllableText;
 
-    // ── DROP → tampilkan teks, hide tile dari bank ──────
-
     public void OnDrop(PointerEventData e)
     {
         DraggableSyllable dragged = e.pointerDrag?.GetComponent<DraggableSyllable>();
         if (dragged == null) return;
 
-        // Kalau slot sudah terisi, kembalikan tile lama ke bank dulu
         if (occupant != null)
         {
             occupant.ReturnToBank();
             occupant = null;
         }
 
-        // Simpan referensi tile, tampilkan teks, sembunyikan tile dari bank
         occupant = dragged;
         dragged.HideFromBank();
 
@@ -50,8 +45,6 @@ public class SyllableDropSlot : MonoBehaviour, IDropHandler, IPointerClickHandle
 
         panel?.OnSlotFilled(slotIndex, dragged.syllableText);
     }
-
-    // ── TAP SLOT TERISI → tile balik ke bank ────────────
 
     public void OnPointerClick(PointerEventData e)
     {
@@ -67,8 +60,6 @@ public class SyllableDropSlot : MonoBehaviour, IDropHandler, IPointerClickHandle
         panel?.OnSlotCleared(slotIndex);
     }
 
-    // ── PUBLIC CLEAR (dipanggil saat soal baru) ──────────
-
     public void Clear()
     {
         if (occupant != null)
@@ -79,8 +70,6 @@ public class SyllableDropSlot : MonoBehaviour, IDropHandler, IPointerClickHandle
         if (slotLabel != null) slotLabel.text = "";
         SetVisualEmpty();
     }
-
-    // ── VISUAL ──────────────────────────────────────────
 
     private void SetVisualEmpty()
     {

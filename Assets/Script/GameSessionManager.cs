@@ -17,6 +17,11 @@ public class GameSessionManager : MonoBehaviour
     public GameObject feedbackPanel;
     public Button backToMapButton;
 
+    [Header("Hint")]
+    public Button hintButton;                   // Tombol Bantuan
+    public TextMeshProUGUI hintCountText;        // Teks "Bantuan (3)"
+    public int maxHintsPerSession = 3;           // Max hint per session
+
     [Header("Panel Prefabs (instantiate saat soal muncul)")]
     public GameObject prefabVisualLetter;    // VisualLetter.prefab
     public GameObject prefabVisualSpacing;   // VisualSpacing.prefab
@@ -44,6 +49,10 @@ public class GameSessionManager : MonoBehaviour
     private int currentQuestionIndex = 0;
     private Question currentQuestion;
     private string selectedMode;
+
+    // Hint state
+    private int  hintsRemaining;
+    private bool hintUsedThisQuestion;
 
     // Metrics
     private SessionMetrics sessionMetrics;
@@ -79,7 +88,17 @@ public class GameSessionManager : MonoBehaviour
         InitializeMetrics();
 
         if (backToMapButton != null)
+        {
+            backToMapButton.gameObject.SetActive(false);
             backToMapButton.onClick.AddListener(() => SceneManager.LoadScene("LevelMap"));
+        }
+
+        // Hint setup
+        hintsRemaining      = maxHintsPerSession;
+        hintUsedThisQuestion = false;
+        UpdateHintUI();
+        if (hintButton != null)
+            hintButton.onClick.AddListener(OnHintClicked);
 
         StartSession();
     }
@@ -159,15 +178,20 @@ public class GameSessionManager : MonoBehaviour
             return;
         }
 
-        currentState   = SessionState.ShowingQuestion;
+        currentState    = SessionState.ShowingQuestion;
         currentQuestion = questions[currentQuestionIndex];
 
+
         if (feedbackPanel != null) feedbackPanel.SetActive(false);
+
+        // Reset hint per soal
+        hintUsedThisQuestion = false;
 
         SpawnPanelForQuestion(currentQuestion);
 
         questionStartTime = Time.time;
         currentState = SessionState.WaitingAnswer;
+        UpdateHintUI(); // ← setelah state WaitingAnswer, baru update UI
 
         Debug.Log($"[GameSession] Soal {currentQuestionIndex + 1}/{totalQuestions} — Tipe: {currentQuestion.type}");
     }
@@ -219,6 +243,35 @@ public class GameSessionManager : MonoBehaviour
         }
 
         Debug.Log($"[GameSession] Panel spawned: {q.type}");
+    }
+
+    // =============================================
+    // HINT
+    // =============================================
+
+    public void OnHintClicked()
+    {
+        if (currentState != SessionState.WaitingAnswer) return;
+        if (hintsRemaining <= 0 || hintUsedThisQuestion) return;
+        if (activePanelInstance == null) return;
+
+        IHintable hintable = activePanelInstance.GetComponent<IHintable>();
+        if (hintable == null) { Debug.LogWarning("[Hint] Panel tidak implement IHintable!"); return; }
+
+        hintable.ShowHint();
+        hintsRemaining--;
+        hintUsedThisQuestion = true;
+        sessionMetrics.penggunaan_hint++;
+        UpdateHintUI();
+        Debug.Log($"[Hint] Digunakan. Sisa: {hintsRemaining}");
+    }
+
+    private void UpdateHintUI()
+    {
+        bool canHint = hintsRemaining > 0 && !hintUsedThisQuestion
+                       && currentState == SessionState.WaitingAnswer;
+        if (hintButton   != null) hintButton.interactable    = canHint;
+        if (hintCountText != null) hintCountText.text        = $"{hintsRemaining}";
     }
 
     // =============================================
@@ -276,8 +329,9 @@ public class GameSessionManager : MonoBehaviour
         if (activePanelInstance != null)
             activePanelInstance.SetActive(false);
 
-        // 2. Tampilkan feedback benar/salah
+        // 2. Tampilkan feedback benar/salah (tanpa backToMapButton)
         if (feedbackPanel != null) feedbackPanel.SetActive(true);
+        if (backToMapButton != null) backToMapButton.gameObject.SetActive(false); // hide saat mid-feedback
         if (feedbackText != null)
         {
             feedbackText.text  = isCorrect ? "Benar! 🎉" : "Salah ❌";
@@ -318,14 +372,15 @@ public class GameSessionManager : MonoBehaviour
 
     void ShowResults(int diffBefore, int diffAfter)
     {
-        // Destroy panel aktif saat session selesai
         if (activePanelInstance != null)
         {
             Destroy(activePanelInstance);
             activePanelInstance = null;
         }
-        // Tampilkan ringkasan hasil sesi di feedbackPanel
+
+        // Tampilkan ringkasan di feedbackPanel + backToMapButton
         if (feedbackPanel != null) feedbackPanel.SetActive(true);
+        if (backToMapButton != null) backToMapButton.gameObject.SetActive(true); // show hanya di akhir session
         if (feedbackText != null)
         {
             feedbackText.text =
@@ -336,9 +391,7 @@ public class GameSessionManager : MonoBehaviour
                 $"Waktu: {sessionMetrics.waktu_penyelesaian:F1}s\n" +
                 $"Difficulty: {diffBefore} → {diffAfter}";
         }
-
-        if (backToMapButton != null)
-            backToMapButton.gameObject.SetActive(true);
+        // backToMapButton sudah visible sejak Start() — tidak perlu show lagi di sini
     }
 
     public SessionMetrics GetSessionMetrics() => sessionMetrics;

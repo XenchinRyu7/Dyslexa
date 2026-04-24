@@ -23,7 +23,7 @@ using System;
 /// AudioSource: Add Component di root PanelSegmenting, uncheck Play On Awake.
 /// Script auto-find AudioSource via GetComponent.
 /// </summary>
-public class FonologisSegmentingPanel : MonoBehaviour
+public class FonologisSegmentingPanel : MonoBehaviour, IHintable
 {
     [Header("Stimulus")]
     public Image stimulusImage;         // Question1/Image
@@ -36,6 +36,12 @@ public class FonologisSegmentingPanel : MonoBehaviour
     [Header("Answer Slots (static, 2 dock)")]
     public GameObject slot1;            // AnswerContainer1
     public GameObject slot2;            // AnswerContainer2
+
+    [Header("Submit")]
+    public UnityEngine.UI.Button submitButton;
+
+    [Header("Reset")]
+    public UnityEngine.UI.Button resetButton; // Tombol Ulang — kembalikan semua tile ke bank
 
     // AudioSource di-find otomatis dari root GO di Awake
     private AudioSource audioSource;
@@ -58,6 +64,21 @@ public class FonologisSegmentingPanel : MonoBehaviour
     {
         onAnswerSelected = callback;
         currentQuestion  = question;
+
+        // Disable submit button sampai semua slot terisi
+        if (submitButton != null)
+        {
+            submitButton.interactable = false;
+            submitButton.onClick.RemoveAllListeners();
+            submitButton.onClick.AddListener(OnSubmit);
+        }
+
+        // Reset button — kembalikan semua tile ke bank
+        if (resetButton != null)
+        {
+            resetButton.onClick.RemoveAllListeners();
+            resetButton.onClick.AddListener(ResetAllSlots);
+        }
 
         // ── Gambar Stimulus ──────────────────────────────
         if (stimulusImage != null && !string.IsNullOrEmpty(question.stimulusImagePath))
@@ -173,21 +194,75 @@ public class FonologisSegmentingPanel : MonoBehaviour
         CheckIfComplete();
     }
 
-    public void OnSlotCleared(int slotIndex) { /* biarkan user coba lagi */ }
+    public void OnSlotCleared(int slotIndex) { CheckIfComplete(); }
 
-    // ── AUTO-CHECK ───────────────────────────────────────
+    // ── RESET: kembalikan semua tile ke bank ─────────────
 
-    private void CheckIfComplete()
+    public void ResetAllSlots()
+    {
+        if (dropSlots != null)
+            foreach (SyllableDropSlot slot in dropSlots)
+                slot?.Clear();
+
+        if (submitButton != null)
+            submitButton.interactable = false;
+    }
+
+    // ── HINT: glow BtnSound pertama yang benar ────────────
+    public void ShowHint()
+    {
+        if (currentQuestion?.correctSyllables == null || syllableObjects == null) return;
+
+        string firstCorrect = currentQuestion.correctSyllables[0];
+
+        foreach (GameObject obj in syllableObjects)
+        {
+            if (obj == null || !obj.activeSelf) continue;
+            TextMeshProUGUI lbl = obj.GetComponentInChildren<TextMeshProUGUI>();
+            if (lbl != null && lbl.text == firstCorrect)
+            {
+                StartCoroutine(GlowBtnSound(obj));
+                return;
+            }
+        }
+    }
+
+    private System.Collections.IEnumerator GlowBtnSound(GameObject btn)
+    {
+        // Cari TMP text di BtnSound (lebih reliable dari Image karena bisa SVG)
+        TMPro.TextMeshProUGUI lbl = btn.GetComponentInChildren<TMPro.TextMeshProUGUI>();
+        if (lbl == null)
+        {
+            Debug.LogWarning("[Hint-Seg] TMP text tidak ditemukan di BtnSound!");
+            yield break;
+        }
+
+        Color original = lbl.color;
+        Color green    = new Color(0.1f, 0.85f, 0.2f, 1f);
+
+        // Kedip hijau 4x
+        for (int i = 0; i < 4; i++)
+        {
+            lbl.color = green;
+            yield return new WaitForSeconds(0.3f);
+            lbl.color = original;
+            yield return new WaitForSeconds(0.2f);
+        }
+        // Tahan hijau 1 detik biar anak sempat lihat
+        lbl.color = green;
+        yield return new WaitForSeconds(1.0f);
+        lbl.color = original;
+    }
+
+    // ── SUBMIT ───────────────────────────────────────────
+
+    /// <summary>
+    /// Dipanggil saat user klik tombol Submit/Cek.
+    /// </summary>
+    private void OnSubmit()
     {
         if (dropSlots == null) return;
 
-        foreach (SyllableDropSlot slot in dropSlots)
-        {
-            if (slot == null || !slot.gameObject.activeSelf) continue;
-            if (!slot.IsOccupied) return; // belum penuh
-        }
-
-        // Semua slot terisi — susun jawaban
         System.Collections.Generic.List<string> answers =
             new System.Collections.Generic.List<string>();
 
@@ -198,7 +273,25 @@ public class FonologisSegmentingPanel : MonoBehaviour
         }
 
         string result = string.Join("-", answers);
-        Debug.Log($"[Segmenting] Jawaban: {result} | Benar: {currentQuestion?.correctAnswer}");
+        Debug.Log($"[Segmenting] Submit: {result} | Benar: {currentQuestion?.correctAnswer}");
         onAnswerSelected?.Invoke(result);
+    }
+
+    // ── AUTO-CHECK ───────────────────────────────────────
+
+    private void CheckIfComplete()
+    {
+        if (dropSlots == null) return;
+
+        bool allFilled = true;
+        foreach (SyllableDropSlot slot in dropSlots)
+        {
+            if (slot == null || !slot.gameObject.activeSelf) continue;
+            if (!slot.IsOccupied) { allFilled = false; break; }
+        }
+
+        // Enable submit button ketika semua slot terisi
+        if (submitButton != null)
+            submitButton.interactable = allFilled;
     }
 }

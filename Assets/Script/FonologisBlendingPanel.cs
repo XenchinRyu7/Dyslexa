@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using System;
 using System.Collections;
 
-public class FonologisBlendingPanel : MonoBehaviour
+public class FonologisBlendingPanel : MonoBehaviour, IHintable
 {
     [Header("Tombol Replay")]
     public Button playSoundButton;
@@ -35,11 +35,20 @@ public class FonologisBlendingPanel : MonoBehaviour
         // ── Reconnect play button + set text bubble ───────
         if (playSoundButton != null)
         {
+            // Connect ROOT playSoundButton
             playSoundButton.onClick.RemoveAllListeners();
             playSoundButton.onClick.AddListener(ReplayAudio);
 
-            // Set teks suku kata di bubble playSoundButton (e.g. "KA-ME-RA")
-            // Derive dari nama file audio: "Audio/Blending/Kamera/ka" → "KA"
+            // Connect juga semua child Button (e.g. "Answer") karena
+            // inner button intercept click sebelum sampai ke root
+            Button[] innerBtns = playSoundButton.GetComponentsInChildren<Button>(true);
+            foreach (Button b in innerBtns)
+            {
+                b.onClick.RemoveAllListeners();
+                b.onClick.AddListener(ReplayAudio);
+            }
+
+            // Set teks suku kata di bubble (e.g. "KA-ME-RA")
             if (question.syllableAudios != null)
             {
                 System.Text.StringBuilder sb = new System.Text.StringBuilder();
@@ -116,16 +125,23 @@ public class FonologisBlendingPanel : MonoBehaviour
 
     // ── AUDIO ────────────────────────────────────────────
 
-    public void ReplayAudio() => PlaySyllablesSequentially();
-
-    private void PlaySyllablesSequentially()
+    public void ReplayAudio()
     {
-        if (playRoutine != null) StopCoroutine(playRoutine);
-        audioSource.Stop(); // Hentikan audio lama sebelum mulai ulang
-        playRoutine = StartCoroutine(PlaySequence());
+        Debug.Log("[Blending] ReplayAudio DIPANGGIL!");
+        PlaySyllablesSequentially();
     }
 
-    private IEnumerator PlaySequence()
+    // IHintable: replay lebih lambat (2x delay normal)
+    public void ShowHint() => PlaySyllablesSequentially(overrideDelay: 2.0f);
+
+    private void PlaySyllablesSequentially(float overrideDelay = -1f)
+    {
+        if (playRoutine != null) StopCoroutine(playRoutine);
+        audioSource.Stop();
+        playRoutine = StartCoroutine(PlaySequence(overrideDelay));
+    }
+
+    private IEnumerator PlaySequence(float overrideDelay = -1f)
     {
         if (currentQuestion?.syllableAudios == null || currentQuestion.syllableAudios.Length == 0)
         {
@@ -134,7 +150,7 @@ public class FonologisBlendingPanel : MonoBehaviour
         }
 
         int   diff  = ProgressManager.Instance.GetCurrentDifficulty();
-        float delay = Mathf.Lerp(1.0f, 0.2f, (diff - 1) / 4f);
+        float delay = overrideDelay >= 0 ? overrideDelay : Mathf.Lerp(1.0f, 0.2f, (diff - 1) / 4f);
 
         Debug.Log($"[Blending] Playing {currentQuestion.syllableAudios.Length} syllables, delay={delay:F2}s");
 

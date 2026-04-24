@@ -2,12 +2,13 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System;
+using System.Collections.Generic;
 
 /// <summary>
 /// Panel Visual Spacing Awareness.
 /// Difficulty mempengaruhi ukuran font opsi jawaban.
 /// </summary>
-public class VisualSpacingPanel : MonoBehaviour
+public class VisualSpacingPanel : MonoBehaviour, IHintable
 {
     [Header("Stimulus")]
     public TextMeshProUGUI stimulusText;  // Question/Text(TMP) — kata utuh
@@ -21,10 +22,14 @@ public class VisualSpacingPanel : MonoBehaviour
     private static readonly float[] answerFontMax = { 120f, 96f, 76f, 60f, 46f };
 
     private Action<string> onAnswerSelected;
+    private Question       currentQuestion;
+    private Button[]       answerButtons;
 
     public void ShowQuestion(Question question, Action<string> callback)
     {
         onAnswerSelected = callback;
+        currentQuestion  = question;
+        answerButtons    = new Button[] { answer1, answer2, answer3 };
 
         int diff    = ProgressManager.Instance.GetCurrentDifficulty();
         int diffIdx = Mathf.Clamp(diff - 1, 0, answerFontMax.Length - 1);
@@ -39,14 +44,17 @@ public class VisualSpacingPanel : MonoBehaviour
             stimulusText.enableWordWrapping = false;
         }
 
-        Button[] buttons  = { answer1, answer2, answer3 };
-        float    maxFont  = answerFontMax[diffIdx];
+        float maxFont = answerFontMax[diffIdx];
 
-        for (int i = 0; i < buttons.Length; i++)
+        for (int i = 0; i < answerButtons.Length; i++)
         {
-            if (buttons[i] == null) continue;
+            if (answerButtons[i] == null) continue;
 
-            TextMeshProUGUI label = buttons[i].GetComponentInChildren<TextMeshProUGUI>();
+            // Reset warna button (kalau hint sebelumnya ngubah)
+            answerButtons[i].image.color  = Color.white;
+            answerButtons[i].interactable = true;
+
+            TextMeshProUGUI label = answerButtons[i].GetComponentInChildren<TextMeshProUGUI>();
             if (label != null && i < question.options.Count)
             {
                 label.text               = question.options[i];
@@ -56,10 +64,32 @@ public class VisualSpacingPanel : MonoBehaviour
                 label.enableWordWrapping = false;
             }
 
-            buttons[i].onClick.RemoveAllListeners();
+            answerButtons[i].onClick.RemoveAllListeners();
             int idx = i;
-            buttons[i].onClick.AddListener(() =>
+            answerButtons[i].onClick.AddListener(() =>
                 onAnswerSelected?.Invoke(question.options[idx]));
         }
+    }
+
+    // ── HINT: eliminasi 1 opsi salah ──────────────────────
+    public void ShowHint()
+    {
+        if (currentQuestion == null || answerButtons == null) return;
+
+        List<int> wrongActive = new List<int>();
+        for (int i = 0; i < answerButtons.Length; i++)
+        {
+            if (answerButtons[i] == null || !answerButtons[i].interactable) continue;
+            TextMeshProUGUI lbl = answerButtons[i].GetComponentInChildren<TextMeshProUGUI>();
+            if (lbl != null && lbl.text != currentQuestion.correctAnswer)
+                wrongActive.Add(i);
+        }
+        if (wrongActive.Count == 0) return;
+
+        int pick = wrongActive[UnityEngine.Random.Range(0, wrongActive.Count)];
+        answerButtons[pick].interactable = false;
+        Image img = answerButtons[pick].GetComponent<Image>();
+        if (img != null) img.color = new Color(1f, 0.25f, 0.25f, 0.6f); // merah = salah
+        Debug.Log($"[Hint-Spacing] Eliminasi opsi: {pick}");
     }
 }
