@@ -360,11 +360,46 @@ public class GameSessionManager : MonoBehaviour
         sessionMetrics.CalculateDerivedMetrics();
 
         int diffBefore = difficultyAtStart;
+
+        // ── Hitung KEDUANYA untuk perbandingan (log & validasi) ──────
+        // Rule Engine prediction
         ruleEngine.EvaluateAndAdapt(sessionMetrics);
-        int diffAfter = ruleEngine.GetCurrentDifficulty();
+        int ruleChange = ruleEngine.GetCurrentDifficulty() - diffBefore;
+
+        // ML prediction (jika aktif & siap)
+        bool settingML   = SettingsWindowManager.UseML;
+        bool instanceOK  = DyslexaMLInference.Instance != null;
+        bool useML       = settingML && instanceOK;
+
+        // Diagnosa — hapus setelah fix
+        Debug.Log($"[Session] UseML setting={settingML}, Instance={instanceOK}, useML={useML}");
+
+        int  mlChange = useML
+            ? DyslexaMLInference.Instance.Predict(sessionMetrics, diffBefore)
+            : ruleChange;
+
+        // Log perbandingan — ini cara paling mudah lihat perbedaannya
+        string activeMode = useML ? "ML ✅" : "Rule Engine";
+        Debug.Log($"[Session] ── Hasil Prediksi ──────────────────────\n" +
+                  $"  Mode aktif      : {activeMode}\n" +
+                  $"  Accuracy        : {sessionMetrics.accuracy:P0}\n" +
+                  $"  Hint rate       : {sessionMetrics.hint_rate:P0}\n" +
+                  $"  Diff sebelum    : {diffBefore}\n" +
+                  $"  Rule Engine     : {diffBefore} → {diffBefore + ruleChange} (change={ruleChange:+0;-0;0})\n" +
+                  $"  ML Model        : {diffBefore} → {diffBefore + mlChange} (change={mlChange:+0;-0;0})\n" +
+                  $"  DIPAKAI         : {(useML ? "ML" : "Rule Engine")}\n" +
+                  (ruleChange != mlChange
+                      ? $"  ⚡ BEDA! ML dan Rule Engine memberikan prediksi berbeda"
+                      : $"  ✅ Sama — keduanya setuju"));
+
+        int diffChange = useML ? mlChange : ruleChange;
+        int diffAfter  = Mathf.Clamp(diffBefore + diffChange, 1, 5);
+        ProgressManager.Instance.SetCurrentDifficulty(diffAfter);
 
         ProgressManager.Instance.UpdateSessionStats(sessionMetrics);
-        logger.LogSession(nodeIndex, sessionMetrics, diffBefore, diffAfter);
+        string pid   = PlayerProfileManager.Instance.ActiveProfile?.profileId ?? "unknown";
+        string pname = PlayerProfileManager.Instance.ActiveProfile?.playerName ?? "unknown";
+        logger.LogSession(pid, pname, nodeIndex, sessionMetrics, diffBefore, diffAfter);
         LevelMapGenerator.CheckAndUnlockNode(sessionMetrics);
 
         ShowResults(diffBefore, diffAfter);

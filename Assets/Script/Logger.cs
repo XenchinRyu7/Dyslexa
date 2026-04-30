@@ -29,6 +29,8 @@ public class QuestionLog
 [System.Serializable]
 public class SessionLog
 {
+    public string profileId;        // ID unik profil pemain
+    public string playerName;       // Nama pemain
     public int nodeIndex;
     public float accuracy;
     public float error_rate;
@@ -37,23 +39,26 @@ public class SessionLog
     public int difficulty_before;
     public int difficulty_after;
     public float avg_response_time;
-    public float waktu_penyelesaian; // NEW: Total session time
+    public float waktu_penyelesaian;
     public int total_hints_used;
     public string timestamp;
 
-    public SessionLog(int nodeIndex, SessionMetrics metrics, int diffBefore, int diffAfter)
+    public SessionLog(string profileId, string playerName, int nodeIndex,
+                      SessionMetrics metrics, int diffBefore, int diffAfter)
     {
-        this.nodeIndex = nodeIndex;
-        this.accuracy = metrics.accuracy;
-        this.error_rate = metrics.error_rate;
-        this.phonology_errors = metrics.kesalahan_fonologis;
-        this.visual_errors = metrics.kesalahan_visual;
-        this.difficulty_before = diffBefore;
-        this.difficulty_after = diffAfter;
-        this.avg_response_time = metrics.rata_waktu_respons;
-        this.waktu_penyelesaian = metrics.waktu_penyelesaian; // NEW
-        this.total_hints_used = metrics.penggunaan_hint;
-        this.timestamp = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss");
+        this.profileId          = profileId;
+        this.playerName         = playerName;
+        this.nodeIndex          = nodeIndex;
+        this.accuracy           = metrics.accuracy;
+        this.error_rate         = metrics.error_rate;
+        this.phonology_errors   = metrics.kesalahan_fonologis;
+        this.visual_errors      = metrics.kesalahan_visual;
+        this.difficulty_before  = diffBefore;
+        this.difficulty_after   = diffAfter;
+        this.avg_response_time  = metrics.rata_waktu_respons;
+        this.waktu_penyelesaian = metrics.waktu_penyelesaian;
+        this.total_hints_used   = metrics.penggunaan_hint;
+        this.timestamp          = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss");
     }
 }
 
@@ -96,14 +101,13 @@ public class Logger : MonoBehaviour
         Debug.Log($"[Logger] Question logged: Node={nodeIndex}, Type={qType}, Correct={correct}");
     }
 
-    public void LogSession(int nodeIndex, SessionMetrics metrics, int diffBefore, int diffAfter)
+    public void LogSession(string profileId, string playerName, int nodeIndex,
+                           SessionMetrics metrics, int diffBefore, int diffAfter)
     {
-        SessionLog log = new SessionLog(nodeIndex, metrics, diffBefore, diffAfter);
+        SessionLog log = new SessionLog(profileId, playerName, nodeIndex, metrics, diffBefore, diffAfter);
         sessionLogs.sessions.Add(log);
-
         SaveSessionLogs();
-
-        Debug.Log($"[Logger] Session logged: Node={nodeIndex}, Accuracy={metrics.accuracy:F2}");
+        Debug.Log($"[Logger] Session logged: Profile={playerName}, Node={nodeIndex}, Accuracy={metrics.accuracy:F2}");
     }
 
     private void SaveQuestionLogs()

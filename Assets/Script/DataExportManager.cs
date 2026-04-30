@@ -35,26 +35,79 @@ public class DataExportManager : MonoBehaviour
             return;
         }
 
-        string csvPath = Path.Combine(Application.persistentDataPath, "Dyslexa_DataExport.csv");
+        string xlsPath = Path.Combine(Application.persistentDataPath, "Dyslexa_DataExport.xls");
+
         StringBuilder sb = new StringBuilder();
 
-        // Header
-        sb.AppendLine("ProfileID,Nama,Umur,Gender,Tanggal Dibuat");
+        // ── XML Spreadsheet 2003 Header ──────────────────
+        sb.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+        sb.AppendLine("<?mso-application progid=\"Excel.Sheet\"?>");
+        sb.AppendLine("<Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\"");
+        sb.AppendLine(" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"");
+        sb.AppendLine(" xmlns:x=\"urn:schemas-microsoft-com:office:excel\">");
 
-        // Data per profil
-        foreach (var profile in profiles)
+        // Style: header bold + background biru
+        sb.AppendLine("<Styles>");
+        sb.AppendLine("  <Style ss:ID=\"header\">");
+        sb.AppendLine("    <Font ss:Bold=\"1\" ss:Color=\"#FFFFFF\"/>");
+        sb.AppendLine("    <Interior ss:Color=\"#2574FF\" ss:Pattern=\"Solid\"/>");
+        sb.AppendLine("    <Alignment ss:Horizontal=\"Center\"/>");
+        sb.AppendLine("  </Style>");
+        sb.AppendLine("  <Style ss:ID=\"number\"><NumberFormat ss:Format=\"0.00\"/></Style>");
+        sb.AppendLine("  <Style ss:ID=\"pct\"><NumberFormat ss:Format=\"0%\"/></Style>");
+        sb.AppendLine("</Styles>");
+
+        // ════════════════════════════════════════════════
+        // SHEET 1 — Data Profil Anak
+        // ════════════════════════════════════════════════
+        sb.AppendLine("<Worksheet ss:Name=\"Profil Anak\">");
+        sb.AppendLine("<Table>");
+
+        // Header row
+        string[] profileHeaders = { "No", "Nama", "Umur", "Gender", "Tanggal Dibuat" };
+        sb.Append("<Row>");
+        foreach (var h in profileHeaders)
+            sb.Append($"<Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">{XmlEsc(h)}</Data></Cell>");
+        sb.AppendLine("</Row>");
+
+        // Data rows
+        int no = 1;
+        foreach (var p in profiles)
         {
-            sb.AppendLine($"{profile.profileId},{EscapeCSV(profile.playerName)},{profile.age},{EscapeCSV(profile.gender)},{EscapeCSV(profile.creationDate)}");
+            sb.AppendLine("<Row>");
+            sb.AppendLine($"  <Cell><Data ss:Type=\"Number\">{no++}</Data></Cell>");
+            sb.AppendLine($"  <Cell><Data ss:Type=\"String\">{XmlEsc(p.playerName)}</Data></Cell>");
+            sb.AppendLine($"  <Cell><Data ss:Type=\"Number\">{p.age}</Data></Cell>");
+            sb.AppendLine($"  <Cell><Data ss:Type=\"String\">{XmlEsc(p.gender)}</Data></Cell>");
+            sb.AppendLine($"  <Cell><Data ss:Type=\"String\">{XmlEsc(p.creationDate)}</Data></Cell>");
+            sb.AppendLine("</Row>");
         }
 
-        // Tambah session log per profil jika ada
+        sb.AppendLine("</Table></Worksheet>");
+
+        // ════════════════════════════════════════════════
+        // SHEET 2 — Riwayat Sesi Permainan
+        // ════════════════════════════════════════════════
+        sb.AppendLine("<Worksheet ss:Name=\"Riwayat Sesi\">");
+        sb.AppendLine("<Table>");
+
+        string[] sessionHeaders =
+        {
+            "No", "Profile ID", "Nama Pemain", "Level / Node",
+            "Akurasi (%)", "Error Rate (%)",
+            "Error Fonologis", "Error Visual", "Hint Digunakan",
+            "Difficulty Sebelum", "Difficulty Sesudah",
+            "Rata Waktu Respons (s)", "Total Waktu Sesi (s)", "Timestamp"
+        };
+
+        sb.Append("<Row>");
+        foreach (var h in sessionHeaders)
+            sb.Append($"<Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">{XmlEsc(h)}</Data></Cell>");
+        sb.AppendLine("</Row>");
+
         string sessionLogPath = Path.Combine(Application.persistentDataPath, "session_logs.json");
         if (File.Exists(sessionLogPath))
         {
-            sb.AppendLine(); // Baris kosong pemisah
-            sb.AppendLine("--- DATA SESI ---");
-            sb.AppendLine("Node,Akurasi,Error Rate,Error Fonologis,Error Visual,Difficulty Sebelum,Difficulty Sesudah,Rata Waktu Respons (s),Waktu Penyelesaian (s),Timestamp");
-
             try
             {
                 string json = File.ReadAllText(sessionLogPath);
@@ -62,20 +115,25 @@ public class DataExportManager : MonoBehaviour
 
                 if (logs != null && logs.sessions != null)
                 {
-                    foreach (var session in logs.sessions)
+                    int sno = 1;
+                    foreach (var s in logs.sessions)
                     {
-                        sb.AppendLine(
-                            $"{session.nodeIndex + 1}," +
-                            $"{session.accuracy:P0}," +
-                            $"{session.error_rate:P0}," +
-                            $"{session.phonology_errors}," +
-                            $"{session.visual_errors}," +
-                            $"{session.difficulty_before}," +
-                            $"{session.difficulty_after}," +
-                            $"{session.avg_response_time:F1}," +
-                            $"{session.waktu_penyelesaian:F1}," +
-                            $"{session.timestamp}"
-                        );
+                        sb.AppendLine("<Row>");
+                        sb.AppendLine($"  <Cell><Data ss:Type=\"Number\">{sno++}</Data></Cell>");
+                        sb.AppendLine($"  <Cell><Data ss:Type=\"String\">{XmlEsc(s.profileId)}</Data></Cell>");
+                        sb.AppendLine($"  <Cell><Data ss:Type=\"String\">{XmlEsc(s.playerName)}</Data></Cell>");
+                        sb.AppendLine($"  <Cell><Data ss:Type=\"String\">Level {s.nodeIndex + 1}</Data></Cell>");
+                        sb.AppendLine($"  <Cell ss:StyleID=\"pct\"><Data ss:Type=\"Number\">{s.accuracy:F4}</Data></Cell>");
+                        sb.AppendLine($"  <Cell ss:StyleID=\"pct\"><Data ss:Type=\"Number\">{s.error_rate:F4}</Data></Cell>");
+                        sb.AppendLine($"  <Cell><Data ss:Type=\"Number\">{s.phonology_errors}</Data></Cell>");
+                        sb.AppendLine($"  <Cell><Data ss:Type=\"Number\">{s.visual_errors}</Data></Cell>");
+                        sb.AppendLine($"  <Cell><Data ss:Type=\"Number\">{s.total_hints_used}</Data></Cell>");
+                        sb.AppendLine($"  <Cell><Data ss:Type=\"Number\">{s.difficulty_before}</Data></Cell>");
+                        sb.AppendLine($"  <Cell><Data ss:Type=\"Number\">{s.difficulty_after}</Data></Cell>");
+                        sb.AppendLine($"  <Cell ss:StyleID=\"number\"><Data ss:Type=\"Number\">{s.avg_response_time:F2}</Data></Cell>");
+                        sb.AppendLine($"  <Cell ss:StyleID=\"number\"><Data ss:Type=\"Number\">{s.waktu_penyelesaian:F2}</Data></Cell>");
+                        sb.AppendLine($"  <Cell><Data ss:Type=\"String\">{XmlEsc(s.timestamp)}</Data></Cell>");
+                        sb.AppendLine("</Row>");
                     }
                 }
             }
@@ -84,16 +142,24 @@ public class DataExportManager : MonoBehaviour
                 Debug.LogWarning($"[DataExport] Gagal membaca session log: {e.Message}");
             }
         }
+        else
+        {
+            // Baris kosong jika belum ada data sesi
+            sb.AppendLine("<Row><Cell><Data ss:Type=\"String\">Belum ada data sesi.</Data></Cell></Row>");
+        }
+
+        sb.AppendLine("</Table></Worksheet>");
+        sb.AppendLine("</Workbook>");
 
         try
         {
-            File.WriteAllText(csvPath, sb.ToString(), Encoding.UTF8);
-            Debug.Log($"[DataExport] CSV berhasil disimpan di: {csvPath}");
-            OpenInExplorer(csvPath);
+            File.WriteAllText(xlsPath, sb.ToString(), Encoding.UTF8);
+            Debug.Log($"[DataExport] Excel berhasil disimpan di: {xlsPath}");
+            OpenInExplorer(xlsPath);
         }
         catch (IOException ex)
         {
-            Debug.LogError($"[DataExport] Gagal menyimpan CSV: {ex.Message}");
+            Debug.LogError($"[DataExport] Gagal menyimpan Excel: {ex.Message}");
         }
     }
 
@@ -223,13 +289,16 @@ public class DataExportManager : MonoBehaviour
     // HELPER
     // =============================================
 
-    private string EscapeCSV(string value)
+    /// <summary>Escape karakter spesial XML supaya tidak rusak struktur file.</summary>
+    private string XmlEsc(string value)
     {
         if (string.IsNullOrEmpty(value)) return "";
-        // Jika ada koma/kutip, bungkus dengan tanda kutip
-        if (value.Contains(",") || value.Contains("\"") || value.Contains("\n"))
-            return $"\"{value.Replace("\"", "\"\"")}\"";
-        return value;
+        return value
+            .Replace("&",  "&amp;")
+            .Replace("<",  "&lt;")
+            .Replace(">",  "&gt;")
+            .Replace("\"", "&quot;")
+            .Replace("'",  "&apos;");
     }
 
     private void OpenInExplorer(string filePath)
