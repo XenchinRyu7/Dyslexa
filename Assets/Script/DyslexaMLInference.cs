@@ -1,98 +1,133 @@
+using System;
+using System.IO;
 using UnityEngine;
+using Microsoft.ML.OnnxRuntime;
+using Microsoft.ML.OnnxRuntime.Tensors;
 
 /// <summary>
-/// Random Forest inference via Unity Sentis.
-/// Model diekspor dengan skl2onnx options={'zipmap': False}
-/// sehingga output berupa Tensor int64 (bukan Sequence of Maps).
+/// Random Forest inference via Microsoft ONNX Runtime (ORT).
+/// Package: com.github.asus4.onnxruntime (via NPM scoped registry)
+///
+/// ORT mendukung TreeEnsembleClassifier — beda dengan Unity Sentis
+/// yang hanya support neural network operators.
 ///
 /// Setup:
-///   1. python train_dyslexa_model.py → dyslexa_rf_model.onnx
-///   2. Copy ke Assets/Resources/ML/dyslexa_rf_model.onnx
-///   3. Install: com.unity.sentis
-///   4. Attach ke GameObject HomeScreen/MainScene
+///   1. Tambah ke manifest.json: com.github.asus4.onnxruntime
+///   2. Copy dyslexa_rf_model.onnx ke Assets/StreamingAssets/
+///   3. Attach script ini ke GameObject HomeScreen/MainScene
 /// </summary>
 public class DyslexaMLInference : MonoBehaviour
 {
     public static DyslexaMLInference Instance { get; private set; }
 
     [Header("Model")]
-    [Tooltip("Path di Resources/ tanpa ekstensi")]
-    public string modelResourcePath = "ML/dyslexa_rf_model";
+    [Tooltip("Nama file .onnx di StreamingAssets")]
+    public string modelFileName = "dyslexa_rf_model.onnx";
 
-    // classes dari LabelEncoder: index 0→-1, 1→0, 2→+1
+    // LabelEncoder mapping: output index → difficulty change
+    // le.classes_ = [-1, 0, 1] → index 0=-1, 1=0, 2=+1
     private readonly int[] _labelMap = { -1, 0, 1 };
+
+    private InferenceSession _session;
     private bool _isReady = false;
 
-#if UNITY_SENTIS
-    private Unity.Sentis.Model  _model;
-    private Unity.Sentis.Worker _worker;
-#endif
+    // ── Lifecycle ─────────────────────────────────────────────────
 
     void Awake()
     {
-        if (Instance == null) { Instance = this; DontDestroyOnLoad(gameObject); LoadModel(); }
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+            LoadModel();
+        }
         else Destroy(gameObject);
     }
 
-    void OnDestroy()
-    {
-#if UNITY_SENTIS
-        _worker?.Dispose();
-#endif
-    }
+    void OnDestroy() => _session?.Dispose();
 
     private void LoadModel()
     {
-#if UNITY_SENTIS
-        var asset = Resources.Load<Unity.Sentis.ModelAsset>(modelResourcePath);
-        if (asset == null)
+        string path = Path.Combine(Application.streamingAssetsPath, modelFileName);
+
+        if (!File.Exists(path))
         {
-            Debug.LogWarning($"[RF] Model tidak ditemukan di Resources/{modelResourcePath}");
+            Debug.LogError($"[RF] Model tidak ditemukan: {path}\n" +
+                           "Copy dyslexa_rf_model.onnx ke Assets/StreamingAssets/");
             return;
         }
-        _model   = Unity.Sentis.ModelLoader.Load(asset);
-        _worker  = new Unity.Sentis.Worker(_model, Unity.Sentis.BackendType.CPU);
-        _isReady = true;
-        Debug.Log("[RF] ✅ Random Forest loaded via Sentis");
-#endif
+
+        try
+        {
+            var opts = new SessionOptions();
+            opts.LogSeverityLevel = OrtLoggingLevel.ORT_LOGGING_LEVEL_WARNING;
+            _session  = new InferenceSession(path, opts);
+            _isReady  = true;
+            Debug.Log("[RF] ✅ Random Forest loaded via ONNX Runtime");
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[RF] Gagal load model: {e.Message}");
+        }
     }
 
+    // ── Predict ───────────────────────────────────────────────────
+
+    /// <summary>
+    /// Prediksi perubahan difficulty dari SessionMetrics.
+    /// Return: -1 (turun), 0 (tetap), +1 (naik)
+    /// </summary>
     public int Predict(SessionMetrics metrics, int currentDifficulty)
     {
-#if UNITY_SENTIS
-        if (_isReady)
+        if (!_isReady)
         {
-            float[] input = {
+            Debug.LogWarning("[RF] Model belum ready, fallback ke Rule Engine.");
+            return RuleEngineFallback(metrics);
+        }
+
+        try
+        {
+            // Input order sesuai FEATURES di training script (8 fitur):
+            float[] inputData = {
                 metrics.accuracy,
                 metrics.error_rate,
                 metrics.kesalahan_fonologis,
                 metrics.kesalahan_visual,
                 metrics.penggunaan_hint,
                 metrics.rata_waktu_respons,
-                (float)currentDifficulty
+                metrics.waktu_penyelesaian,       // fitur ke-7: total durasi sesi
+                (float)currentDifficulty           // fitur ke-8
             };
 
-            using var t = new Unity.Sentis.Tensor<float>(
-                new Unity.Sentis.TensorShape(1, 7), input);
-            _worker.Schedule(t);
-
-            // output_label → int64 Tensor shape [1] (karena zipmap=False)
-            using var label = _worker.PeekOutput("variable") as Unity.Sentis.Tensor<int>;
-            if (label != null)
+            // Buat input tensor shape [1, 8]
+            var tensor = new DenseTensor<float>(inputData, new[] { 1, 8 });
+            var inputs = new[]
             {
-                label.MakeReadable();
-                int classIdx = label[0];
-                // classIdx adalah index setelah LabelEncoder: 0→-1, 1→0, 2→+1
-                int change = (classIdx >= 0 && classIdx < _labelMap.Length)
-                    ? _labelMap[classIdx] : 0;
+                NamedOnnxValue.CreateFromTensor("input", tensor)
+            };
 
-                Debug.Log($"[RF] class={classIdx} → change={change:+0;-0;0}");
-                return change;
-            }
+            using var results = _session.Run(inputs);
+
+            // Output dengan zipmap=False:
+            // "variable" → int64 tensor [1] = predicted class index
+            var labelTensor = results[0].AsTensor<long>();
+            int classIdx    = (int)labelTensor[0];
+
+            int change = (classIdx >= 0 && classIdx < _labelMap.Length)
+                ? _labelMap[classIdx] : 0;
+
+            Debug.Log($"[RF] class={classIdx} → change={change:+0;-0;0} " +
+                      $"(acc={metrics.accuracy:P0}, waktu={metrics.waktu_penyelesaian:F0}s, diff={currentDifficulty})");
+            return change;
         }
-#endif
-        return RuleEngineFallback(metrics);
+        catch (Exception e)
+        {
+            Debug.LogError($"[RF] Inference error: {e.Message}");
+            return RuleEngineFallback(metrics);
+        }
     }
+
+    // ── Fallback (hanya jika model gagal load) ────────────────────
 
     private int RuleEngineFallback(SessionMetrics metrics)
     {

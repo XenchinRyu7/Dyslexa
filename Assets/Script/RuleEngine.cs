@@ -34,50 +34,66 @@ public class RuleEngine : MonoBehaviour
     private const int MIN_DIFFICULTY = 1;
     private const int MAX_DIFFICULTY = 5;
 
+    /// <summary>
+    /// PURE CALCULATION — tidak mengubah state apapun.
+    /// Gunakan ini untuk perbandingan/log tanpa side effect.
+    /// </summary>
+    public int CalculateChange(SessionMetrics metrics)
+    {
+        if (metrics.accuracy >= 0.85f && metrics.hint_rate < 0.2f) return +1;
+        if (metrics.accuracy <  0.60f)                              return -1;
+        return 0;
+    }
+
+    /// <summary>
+    /// APPLY — kalkulasi DAN simpan hasilnya ke ProgressManager.
+    /// Panggil ini hanya kalau Rule Engine yang dipakai (bukan ML).
+    /// </summary>
     public void EvaluateAndAdapt(SessionMetrics metrics)
     {
         metrics.CalculateDerivedMetrics();
 
-        // Get current values from ProgressManager
         int currentDifficulty = ProgressManager.Instance.GetCurrentDifficulty();
         float phonologyWeight = ProgressManager.Instance.GetPhonologyWeight();
-        float visualWeight = ProgressManager.Instance.GetVisualWeight();
+        float visualWeight    = ProgressManager.Instance.GetVisualWeight();
+        int   difficultyBefore = currentDifficulty;
 
-        int difficultyBefore = currentDifficulty;
-
-        // Difficulty adjustment rules
-        if (metrics.accuracy >= 0.85f && metrics.hint_rate < 0.2f)
-        {
-            currentDifficulty++;
-        }
-        else if (metrics.accuracy < 0.6f)
-        {
-            currentDifficulty--;
-        }
-        // else: difficulty stays the same
-
-        // Clamp difficulty between 1-5
-        currentDifficulty = Mathf.Clamp(currentDifficulty, MIN_DIFFICULTY, MAX_DIFFICULTY);
+        // Difficulty adjustment
+        currentDifficulty += CalculateChange(metrics);
+        currentDifficulty  = Mathf.Clamp(currentDifficulty, MIN_DIFFICULTY, MAX_DIFFICULTY);
 
         // Content weight adjustment
         if (metrics.kesalahan_fonologis > metrics.kesalahan_visual)
-        {
             phonologyWeight += 0.1f;
-        }
         else if (metrics.kesalahan_visual > metrics.kesalahan_fonologis)
-        {
             visualWeight += 0.1f;
-        }
 
-        // Normalize weights so total = 1
         NormalizeWeights(ref phonologyWeight, ref visualWeight);
 
-        // Save to ProgressManager (PERSISTENT GLOBAL STATE)
+        // Save global state
         ProgressManager.Instance.SetCurrentDifficulty(currentDifficulty);
         ProgressManager.Instance.SetWeights(phonologyWeight, visualWeight);
 
-        Debug.Log($"[RuleEngine] Difficulty: {difficultyBefore} → {currentDifficulty} (GLOBAL)");
+        Debug.Log($"[RuleEngine] Difficulty: {difficultyBefore} → {currentDifficulty} (APPLIED)");
         Debug.Log($"[RuleEngine] Weights: Phonology={phonologyWeight:F2}, Visual={visualWeight:F2}");
+    }
+
+    /// <summary>
+    /// Hanya update weights (untuk ML mode — difficulty diatur ML, tapi weights tetap diupdate).
+    /// </summary>
+    public void UpdateWeightsOnly(SessionMetrics metrics)
+    {
+        float phonologyWeight = ProgressManager.Instance.GetPhonologyWeight();
+        float visualWeight    = ProgressManager.Instance.GetVisualWeight();
+
+        if (metrics.kesalahan_fonologis > metrics.kesalahan_visual)
+            phonologyWeight += 0.1f;
+        else if (metrics.kesalahan_visual > metrics.kesalahan_fonologis)
+            visualWeight += 0.1f;
+
+        NormalizeWeights(ref phonologyWeight, ref visualWeight);
+        ProgressManager.Instance.SetWeights(phonologyWeight, visualWeight);
+        Debug.Log($"[RuleEngine] Weights updated (ML mode): Phonology={phonologyWeight:F2}, Visual={visualWeight:F2}");
     }
 
     private void NormalizeWeights(ref float phonology, ref float visual)

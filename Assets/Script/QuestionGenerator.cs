@@ -76,24 +76,28 @@ public class QuestionGenerator : MonoBehaviour
     // =============================================
     private static readonly object[][] segmentingBank = new object[][]
     {
+        // Format: { imagePath, correct[], allSyllables_hard[], audioPerSuku_hard[], easyDistractor, easyDistractorAudio }
+        // allSyllables_hard  = correct + distraktor fonetis mirip (diff 3-5)
+        // easyDistractor     = suku kata beda jauh (diff 1-2), audio reuse dari kata lain
+
         // === KATA DENGAN AUDIO ===
-        new object[] { "Image/Segmenting/soccer_ball", new string[]{"BO","LA"},   new string[]{"BO","LA","LU"},   new string[]{"Audio/Segmenting/BOLA/bo", "Audio/Segmenting/BOLA/la", "Audio/Segmenting/BOLA/lu"} }, // BOLA
-        new object[] { "Image/Segmenting/bread",       new string[]{"RO","TI"},   new string[]{"RO","TI","TU"},   new string[]{"Audio/Segmenting/ROTI/ro", "Audio/Segmenting/ROTI/ti", "Audio/Segmenting/ROTI/tu"} }, // ROTI
-        new object[] { "Image/Segmenting/horse",       new string[]{"KU","DA"},   new string[]{"KU","DA","DO"},   new string[]{"Audio/Segmenting/KUDA/ku", "Audio/Segmenting/KUDA/da", "Audio/Segmenting/KUDA/do"} }, // KUDA
-        new object[] { "Image/Segmenting/eyes",        new string[]{"MA","TA"},   new string[]{"MA","TA","TU"},   new string[]{"Audio/Segmenting/MATA/ma", "Audio/Segmenting/MATA/ta", "Audio/Segmenting/MATA/tu"} }, // MATA
-        new object[] { "Image/Segmenting/table",       new string[]{"ME","JA"},   new string[]{"ME","JA","JO"},   new string[]{"Audio/Segmenting/MEJA/me", "Audio/Segmenting/MEJA/ja", "Audio/Segmenting/MEJA/jo"} }, // MEJA
-        new object[] { "Image/Segmenting/shirt",       new string[]{"BA","JU"},   new string[]{"BA","JU","JA"},   new string[]{"Audio/Segmenting/BAJU/ba", "Audio/Segmenting/BAJU/ju", "Audio/Segmenting/BAJU/ja"} }, // BAJU
+        new object[] { "Image/Segmenting/soccer_ball", new string[]{"BO","LA"}, new string[]{"BO","LA","LU"}, new string[]{"Audio/Segmenting/BOLA/bo","Audio/Segmenting/BOLA/la","Audio/Segmenting/BOLA/lu"}, "TA", "Audio/Segmenting/MATA/ta"  }, // BOLA
+        new object[] { "Image/Segmenting/bread",       new string[]{"RO","TI"}, new string[]{"RO","TI","TU"}, new string[]{"Audio/Segmenting/ROTI/ro","Audio/Segmenting/ROTI/ti","Audio/Segmenting/ROTI/tu"}, "MA", "Audio/Segmenting/MATA/ma"  }, // ROTI
+        new object[] { "Image/Segmenting/horse",       new string[]{"KU","DA"}, new string[]{"KU","DA","DO"}, new string[]{"Audio/Segmenting/KUDA/ku","Audio/Segmenting/KUDA/da","Audio/Segmenting/KUDA/do"}, "RO", "Audio/Segmenting/ROTI/ro"  }, // KUDA
+        new object[] { "Image/Segmenting/eyes",        new string[]{"MA","TA"}, new string[]{"MA","TA","TU"}, new string[]{"Audio/Segmenting/MATA/ma","Audio/Segmenting/MATA/ta","Audio/Segmenting/MATA/tu"}, "BO", "Audio/Segmenting/BOLA/bo"  }, // MATA
+        new object[] { "Image/Segmenting/table",       new string[]{"ME","JA"}, new string[]{"ME","JA","JO"}, new string[]{"Audio/Segmenting/MEJA/me","Audio/Segmenting/MEJA/ja","Audio/Segmenting/MEJA/jo"}, "KU", "Audio/Segmenting/KUDA/ku"  }, // MEJA
+        new object[] { "Image/Segmenting/shirt",       new string[]{"BA","JU"}, new string[]{"BA","JU","JA"}, new string[]{"Audio/Segmenting/BAJU/ba","Audio/Segmenting/BAJU/ju","Audio/Segmenting/BAJU/ja"}, "ME", "Audio/Segmenting/MEJA/me"  }, // BAJU
 
         // === KATA TANPA AUDIO (audio menyusul) ===
-        new object[] { "Image/Segmenting/home",     new string[]{"RU","MAH"},  new string[]{"RU","MAH","BAH"}, new string[]{"","",""} }, // RUMAH
-        new object[] { "Image/Segmenting/cat",      new string[]{"KU","CING"}, new string[]{"KU","CING","SING"},new string[]{"","",""} }, // KUCING
-        new object[] { "Image/Segmenting/fish",     new string[]{"I","KAN"},   new string[]{"I","KAN","PAN"},  new string[]{"","",""} }, // IKAN
-        new object[] { "Image/Segmenting/door",     new string[]{"PIN","TU"},  new string[]{"PIN","TU","DU"},  new string[]{"","",""} }, // PINTU
-        new object[] { "Image/Segmenting/armchair", new string[]{"KUR","SI"},  new string[]{"KUR","SI","NI"},  new string[]{"","",""} }, // KURSI
-        new object[] { "Image/Segmenting/broom",    new string[]{"SA","PU"},   new string[]{"SA","PU","BU"},   new string[]{"","",""} }, // SAPU
-        new object[] { "Image/Segmenting/chicken",  new string[]{"A","YAM"},   new string[]{"A","YAM","LAM"},  new string[]{"","",""} }, // AYAM
-        new object[] { "Image/Segmenting/hat",      new string[]{"TO","PI"},   new string[]{"TO","PI","BI"},   new string[]{"","",""} }, // TOPI
-        new object[] { "Image/Segmenting/car",      new string[]{"MO","BIL"},  new string[]{"MO","BIL","NIL"}, new string[]{"","",""} }, // MOBIL
+        new object[] { "Image/Segmenting/home",     new string[]{"RU","MAH"},  new string[]{"RU","MAH","BAH"},  new string[]{"","",""}, "TA",  "" }, // RUMAH
+        new object[] { "Image/Segmenting/cat",      new string[]{"KU","CING"}, new string[]{"KU","CING","SING"},new string[]{"","",""}, "BO",  "" }, // KUCING
+        new object[] { "Image/Segmenting/fish",     new string[]{"I","KAN"},   new string[]{"I","KAN","PAN"},   new string[]{"","",""}, "MA",  "" }, // IKAN
+        new object[] { "Image/Segmenting/door",     new string[]{"PIN","TU"},  new string[]{"PIN","TU","DU"},   new string[]{"","",""}, "BO",  "" }, // PINTU
+        new object[] { "Image/Segmenting/armchair", new string[]{"KUR","SI"},  new string[]{"KUR","SI","NI"},   new string[]{"","",""}, "MA",  "" }, // KURSI
+        new object[] { "Image/Segmenting/broom",    new string[]{"SA","PU"},   new string[]{"SA","PU","BU"},    new string[]{"","",""}, "TA",  "" }, // SAPU
+        new object[] { "Image/Segmenting/chicken",  new string[]{"A","YAM"},   new string[]{"A","YAM","LAM"},  new string[]{"","",""}, "BO",  "" }, // AYAM
+        new object[] { "Image/Segmenting/hat",      new string[]{"TO","PI"},   new string[]{"TO","PI","BI"},    new string[]{"","",""}, "MA",  "" }, // TOPI
+        new object[] { "Image/Segmenting/car",      new string[]{"MO","BIL"},  new string[]{"MO","BIL","NIL"},  new string[]{"","",""}, "TA",  "" }, // MOBIL
     };
 
 
@@ -179,8 +183,8 @@ public class QuestionGenerator : MonoBehaviour
 
         string word = spacingWords[Random.Range(0, Mathf.Min(poolEnd, spacingWords.Length))];
 
-        // Generate variasi spasi salah secara algoritmik
-        List<string> wrongs = GenerateSpacingVariants(word);
+        // Generate variasi spasi salah — kesulitan mempengaruhi posisi split
+        List<string> wrongs = GenerateSpacingVariants(word, difficulty);
 
         List<string> options = new List<string> { word };
         options.AddRange(wrongs);
@@ -190,27 +194,53 @@ public class QuestionGenerator : MonoBehaviour
     }
 
     /// <summary>
-    /// Buat 2 variasi spasi salah dari sebuah kata.
-    /// Contoh: "BOLA" (4 huruf) → "BO LA" (split 2), "BOL A" (split 3)
-    /// Contoh: "RUMAH" (5 huruf) → "RU MAH" (split 2), "RUM AH" (split 3)
+    /// Buat 2 variasi spasi salah dari sebuah kata — adaptif berdasarkan difficulty.
+    ///
+    /// Difficulty 1-2 (mudah): split di posisi ekstrim (1 dan len-1)
+    ///   → Salah lebih OBVIOUS, misal "B OLA" dan "BOL A" — mudah dibedakan
+    ///
+    /// Difficulty 3 (sedang): split di 1/3 dan 1/2 kata
+    ///   → Distraksi sedang, misal "BO LA" dan "BOL A"
+    ///
+    /// Difficulty 4-5 (sulit): split di tengah dan tengah+1
+    ///   → Salah lebih SUBTLE, dua opsi salah sangat mirip satu sama lain
+    ///   → misal "BO LA" dan "BOL A" untuk kata 4 huruf
     /// </summary>
-    private List<string> GenerateSpacingVariants(string word)
+    private List<string> GenerateSpacingVariants(string word, int difficulty)
     {
         List<string> variants = new List<string>();
         int len = word.Length;
 
-        // Pilih 2 posisi split yang berbeda
-        // Posisi split: mulai dari 1/3 sampai 2/3 panjang kata
-        int split1 = Mathf.Max(1, len / 3);        // misal 4/3=1, 6/3=2
-        int split2 = Mathf.Max(split1 + 1, len / 2); // misal 4/2=2, 6/2=3
+        if (difficulty <= 2)
+        {
+            // Mudah: split di posisi paling ekstrim → paling obvious
+            string v1 = word.Substring(0, 1) + " " + word.Substring(1);
+            string v2 = word.Substring(0, len - 1) + " " + word.Substring(len - 1);
+            if (!variants.Contains(v1)) variants.Add(v1);
+            if (!variants.Contains(v2) && v2 != v1) variants.Add(v2);
+        }
+        else if (difficulty == 3)
+        {
+            // Sedang: split di 1/3 dan 1/2
+            int split1 = Mathf.Max(1, len / 3);
+            int split2 = Mathf.Max(split1 + 1, len / 2);
+            if (split1 < len)
+                variants.Add(word.Substring(0, split1) + " " + word.Substring(split1));
+            if (split2 < len && split2 != split1)
+                variants.Add(word.Substring(0, split2) + " " + word.Substring(split2));
+        }
+        else
+        {
+            // Sulit: split di tengah dan tengah+1 → paling mirip, paling sulit dibedakan
+            int mid  = Mathf.Max(1, len / 2);
+            int mid2 = Mathf.Min(mid + 1, len - 1);
+            string v1 = word.Substring(0, mid) + " " + word.Substring(mid);
+            string v2 = word.Substring(0, mid2) + " " + word.Substring(mid2);
+            if (!variants.Contains(v1)) variants.Add(v1);
+            if (!variants.Contains(v2) && v2 != v1) variants.Add(v2);
+        }
 
-        if (split1 < len)
-            variants.Add(word.Substring(0, split1) + " " + word.Substring(split1));
-
-        if (split2 < len && split2 != split1)
-            variants.Add(word.Substring(0, split2) + " " + word.Substring(split2));
-
-        // Pastikan selalu ada 2 variasi
+        // Pastikan selalu ada 2 variasi (fallback)
         while (variants.Count < 2)
         {
             int sp = Random.Range(1, len);
@@ -256,8 +286,20 @@ public class QuestionGenerator : MonoBehaviour
 
         string   imagePath        = (string)entry[0];
         string[] correctSyllables = (string[])entry[1];
-        string[] allSyllables     = (string[])entry[2];
+        string[] allSyllables     = (string[])entry[2];  // hard distractor (default)
         string[] syllableAudios   = (string[])entry[3];
+
+        // Diff 1-2 → pakai easy distraktor (suku kata beda jauh, gampang dibedakan)
+        // Diff 3-5 → pakai hard distraktor (suku kata mirip fonetis, perlu fokus)
+        if (difficulty <= 2 && entry.Length > 4)
+        {
+            string easyDist      = (string)entry[4];
+            string easyDistAudio = entry.Length > 5 ? (string)entry[5] : "";
+
+            // Bangun array baru: 2 suku kata benar + 1 easy distraktor
+            allSyllables   = new string[] { allSyllables[0], allSyllables[1], easyDist };
+            syllableAudios = new string[] { syllableAudios[0], syllableAudios[1], easyDistAudio };
+        }
 
         // Shuffle index BERSAMA supaya text dan audio tetap sinkron
         List<int> indices = new List<int>();

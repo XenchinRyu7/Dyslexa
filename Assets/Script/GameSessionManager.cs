@@ -93,14 +93,21 @@ public class GameSessionManager : MonoBehaviour
             backToMapButton.onClick.AddListener(() => SceneManager.LoadScene("LevelMap"));
         }
 
-        // Hint setup
-        hintsRemaining      = maxHintsPerSession;
+        // Hint setup — adaptif berdasarkan difficulty
+        // Difficulty 1-2 → 3 hint (mudah, lebih banyak bantuan)
+        // Difficulty 3   → 2 hint
+        // Difficulty 4-5 → 1 hint (sulit, mandiri)
+        int currentDiff = ProgressManager.Instance.GetCurrentDifficulty();
+        hintsRemaining = currentDiff <= 2 ? 3 : currentDiff == 3 ? 2 : 1;
         hintUsedThisQuestion = false;
         UpdateHintUI();
         if (hintButton != null)
             hintButton.onClick.AddListener(OnHintClicked);
 
         StartSession();
+
+        // BGM gameplay
+        AudioManager.Instance?.PlayGameplay();
     }
 
     void Update()
@@ -334,7 +341,7 @@ public class GameSessionManager : MonoBehaviour
         if (backToMapButton != null) backToMapButton.gameObject.SetActive(false); // hide saat mid-feedback
         if (feedbackText != null)
         {
-            feedbackText.text  = isCorrect ? "Benar! 🎉" : "Salah ❌";
+            feedbackText.text  = isCorrect ? "Benar!" : "Salah";
             feedbackText.color = isCorrect ? Color.green : Color.red;
         }
 
@@ -361,24 +368,36 @@ public class GameSessionManager : MonoBehaviour
 
         int diffBefore = difficultyAtStart;
 
-        // ── Hitung KEDUANYA untuk perbandingan (log & validasi) ──────
-        // Rule Engine prediction
-        ruleEngine.EvaluateAndAdapt(sessionMetrics);
-        int ruleChange = ruleEngine.GetCurrentDifficulty() - diffBefore;
+        // ── Pure calculation Rule Engine (TANPA side effect) ─────────
+        // CalculateChange() tidak mengubah ProgressManager sama sekali
+        int ruleChange = ruleEngine.CalculateChange(sessionMetrics);
 
-        // ML prediction (jika aktif & siap)
-        bool settingML   = SettingsWindowManager.UseML;
-        bool instanceOK  = DyslexaMLInference.Instance != null;
-        bool useML       = settingML && instanceOK;
+        // ── ML prediction (jika aktif & siap) ────────────────────────
+        bool settingML  = SettingsWindowManager.UseML;
+        bool instanceOK = DyslexaMLInference.Instance != null;
+        bool useML      = settingML && instanceOK;
 
-        // Diagnosa — hapus setelah fix
-        Debug.Log($"[Session] UseML setting={settingML}, Instance={instanceOK}, useML={useML}");
-
-        int  mlChange = useML
+        int mlChange = useML
             ? DyslexaMLInference.Instance.Predict(sessionMetrics, diffBefore)
             : ruleChange;
 
-        // Log perbandingan — ini cara paling mudah lihat perbedaannya
+        // ── Apply ke ProgressManager sesuai mode ─────────────────────
+        int diffChange = useML ? mlChange : ruleChange;
+        int diffAfter  = Mathf.Clamp(diffBefore + diffChange, 1, 5);
+
+        if (useML)
+        {
+            // ML mode: difficulty dari ML, weights tetap diupdate dari error pattern
+            ProgressManager.Instance.SetCurrentDifficulty(diffAfter);
+            ruleEngine.UpdateWeightsOnly(sessionMetrics);
+        }
+        else
+        {
+            // Rule Engine mode: apply penuh (difficulty + weights)
+            ruleEngine.EvaluateAndAdapt(sessionMetrics);
+        }
+
+        // ── Log perbandingan ─────────────────────────────────────────
         string activeMode = useML ? "ML ✅" : "Rule Engine";
         Debug.Log($"[Session] ── Hasil Prediksi ──────────────────────\n" +
                   $"  Mode aktif      : {activeMode}\n" +
@@ -392,9 +411,6 @@ public class GameSessionManager : MonoBehaviour
                       ? $"  ⚡ BEDA! ML dan Rule Engine memberikan prediksi berbeda"
                       : $"  ✅ Sama — keduanya setuju"));
 
-        int diffChange = useML ? mlChange : ruleChange;
-        int diffAfter  = Mathf.Clamp(diffBefore + diffChange, 1, 5);
-        ProgressManager.Instance.SetCurrentDifficulty(diffAfter);
 
         ProgressManager.Instance.UpdateSessionStats(sessionMetrics);
         string pid   = PlayerProfileManager.Instance.ActiveProfile?.profileId ?? "unknown";
@@ -403,6 +419,9 @@ public class GameSessionManager : MonoBehaviour
         LevelMapGenerator.CheckAndUnlockNode(sessionMetrics);
 
         ShowResults(diffBefore, diffAfter);
+
+        // Kembali ke BGM homescreen setelah session selesai
+        AudioManager.Instance?.PlayHome();
     }
 
     void ShowResults(int diffBefore, int diffAfter)
@@ -418,13 +437,12 @@ public class GameSessionManager : MonoBehaviour
         if (backToMapButton != null) backToMapButton.gameObject.SetActive(true); // show hanya di akhir session
         if (feedbackText != null)
         {
+            float acc  = sessionMetrics.accuracy;
+            string msg = acc >= 0.70f ? "Kerja Bagus!" : "Ayo Coba Lagi! Semangat";
+
             feedbackText.text =
-                $"<b>SESSION SELESAI!</b>\n\n" +
-                $"Mode: {selectedMode}\n" +
-                $"✓ Benar: {sessionMetrics.jumlah_benar}/{sessionMetrics.total_soal}\n" +
-                $"Akurasi: {sessionMetrics.accuracy:P0}\n" +
-                $"Waktu: {sessionMetrics.waktu_penyelesaian:F1}s\n" +
-                $"Difficulty: {diffBefore} → {diffAfter}";
+                $"<b>{msg}</b>\n\n" +
+                $"Benar: {sessionMetrics.jumlah_benar}/{sessionMetrics.total_soal}";
         }
         // backToMapButton sudah visible sejak Start() — tidak perlu show lagi di sini
     }

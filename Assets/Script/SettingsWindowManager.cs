@@ -35,8 +35,8 @@ public class SettingsWindowManager : MonoBehaviour
     private const string KEY_ADAPTIVE_MODE = "AdaptiveMode";
 
     // 0 = Rule Engine, 1 = ML
-    public static int CurrentAdaptiveMode => PlayerPrefs.GetInt(KEY_ADAPTIVE_MODE, 0);
-    public static bool UseML             => CurrentAdaptiveMode == 1;
+    public static int  CurrentAdaptiveMode => PlayerPrefs.GetInt(KEY_ADAPTIVE_MODE, 0);
+    public static bool UseML              => CurrentAdaptiveMode == 1;
 
     void Start()
     {
@@ -62,7 +62,6 @@ public class SettingsWindowManager : MonoBehaviour
         bool savedML = PlayerPrefs.GetInt(KEY_ADAPTIVE_MODE, 0) == 1;
         adaptiveModeToggle.isOn = savedML;
         UpdateModeLabel(savedML);
-
         adaptiveModeToggle.onValueChanged.AddListener(OnAdaptiveModeChanged);
     }
 
