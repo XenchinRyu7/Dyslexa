@@ -4,6 +4,9 @@ using TMPro;
 
 public class MainNavigation : MonoBehaviour
 {
+    [Header("UI Panels")]
+    public GameObject exitConfirmationWindow;
+
     public void LoadScene(string sceneName)
     {
         SceneManager.LoadScene(sceneName);
@@ -133,6 +136,23 @@ public class MainNavigation : MonoBehaviour
         PlayerPrefs.SetString("SelectedGameMode", "Visual");
         PlayerPrefs.Save();
         SceneManager.LoadScene("LevelMap");
+    }
+
+    // --- EXIT CONFIRMATION ---
+    public void ShowExitConfirmation()
+    {
+        if (exitConfirmationWindow != null)
+        {
+            exitConfirmationWindow.SetActive(true);
+        }
+    }
+
+    public void HideExitConfirmation()
+    {
+        if (exitConfirmationWindow != null)
+        {
+            exitConfirmationWindow.SetActive(false);
+        }
     }
 
     public void QuitGame()

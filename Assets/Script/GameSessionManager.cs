@@ -40,7 +40,6 @@ public class GameSessionManager : MonoBehaviour
 
     [Header("Managers")]
     private QuestionGenerator questionGenerator;
-    private RuleEngine ruleEngine;
     private Logger logger;
 
     // Session state
@@ -125,7 +124,6 @@ public class GameSessionManager : MonoBehaviour
     void InitializeManagers()
     {
         questionGenerator = GetComponent<QuestionGenerator>() ?? gameObject.AddComponent<QuestionGenerator>();
-        ruleEngine        = GetComponent<RuleEngine>()        ?? gameObject.AddComponent<RuleEngine>();
         logger            = GetComponent<Logger>()            ?? gameObject.AddComponent<Logger>();
     }
 
@@ -156,7 +154,7 @@ public class GameSessionManager : MonoBehaviour
             waktu_penyelesaian  = 0f
         };
 
-        difficultyAtStart = ruleEngine.GetCurrentDifficulty();
+        difficultyAtStart = ProgressManager.Instance.GetCurrentDifficulty();
         sessionStartTime  = Time.time;
     }
 
@@ -167,7 +165,7 @@ public class GameSessionManager : MonoBehaviour
 
         questions = questionGenerator.GenerateQuestionSet(
             totalQuestions,
-            ruleEngine.GetCurrentDifficulty(),
+            ProgressManager.Instance.GetCurrentDifficulty(),
             selectedMode
         );
 
@@ -318,7 +316,7 @@ public class GameSessionManager : MonoBehaviour
             ? QuestionType.PhonologyBlending
             : QuestionType.VisualLetterRecognition;
 
-        logger.LogQuestion(nodeIndex, ruleEngine.GetCurrentDifficulty(), currentQuestion.type, isCorrect, responseTime, false);
+        logger.LogQuestion(nodeIndex, ProgressManager.Instance.GetCurrentDifficulty(), currentQuestion.type, isCorrect, responseTime, false);
 
         UpdateProgressBar();
         StartCoroutine(ShowFeedbackThenNext(isCorrect));
@@ -368,48 +366,51 @@ public class GameSessionManager : MonoBehaviour
 
         int diffBefore = difficultyAtStart;
 
-        // ── Pure calculation Rule Engine (TANPA side effect) ─────────
-        // CalculateChange() tidak mengubah ProgressManager sama sekali
-        int ruleChange = ruleEngine.CalculateChange(sessionMetrics);
-
-        // ── ML prediction (jika aktif & siap) ────────────────────────
-        bool settingML  = SettingsWindowManager.UseML;
-        bool instanceOK = DyslexaMLInference.Instance != null;
-        bool useML      = settingML && instanceOK;
-
-        int mlChange = useML
-            ? DyslexaMLInference.Instance.Predict(sessionMetrics, diffBefore)
-            : ruleChange;
-
-        // ── Apply ke ProgressManager sesuai mode ─────────────────────
-        int diffChange = useML ? mlChange : ruleChange;
-        int diffAfter  = Mathf.Clamp(diffBefore + diffChange, 1, 5);
-
-        if (useML)
+        // ── PURE ML DDA ─────────────────────────────────────────
+        int mlChange = 0;
+        if (DyslexaMLInference.Instance != null)
         {
-            // ML mode: difficulty dari ML, weights tetap diupdate dari error pattern
-            ProgressManager.Instance.SetCurrentDifficulty(diffAfter);
-            ruleEngine.UpdateWeightsOnly(sessionMetrics);
+            mlChange = DyslexaMLInference.Instance.Predict(sessionMetrics, diffBefore);
         }
         else
         {
-            // Rule Engine mode: apply penuh (difficulty + weights)
-            ruleEngine.EvaluateAndAdapt(sessionMetrics);
+            Debug.LogWarning("[GameSession] DyslexaMLInference tidak ditemukan, fallback difficulty tetap 0.");
         }
 
-        // ── Log perbandingan ─────────────────────────────────────────
-        string activeMode = useML ? "ML ✅" : "Rule Engine";
-        Debug.Log($"[Session] ── Hasil Prediksi ──────────────────────\n" +
-                  $"  Mode aktif      : {activeMode}\n" +
+        int diffAfter = Mathf.Clamp(diffBefore + mlChange, 1, 5);
+        ProgressManager.Instance.SetCurrentDifficulty(diffAfter);
+
+        // ── Content Weight Adjustment ──────────────────────────────
+        float phonologyWeight = ProgressManager.Instance.GetPhonologyWeight();
+        float visualWeight    = ProgressManager.Instance.GetVisualWeight();
+
+        if (sessionMetrics.kesalahan_fonologis > sessionMetrics.kesalahan_visual)
+            phonologyWeight += 0.1f;
+        else if (sessionMetrics.kesalahan_visual > sessionMetrics.kesalahan_fonologis)
+            visualWeight += 0.1f;
+
+        // Normalize
+        float total = phonologyWeight + visualWeight;
+        if (total > 0)
+        {
+            phonologyWeight /= total;
+            visualWeight /= total;
+        }
+        else
+        {
+            phonologyWeight = 0.5f;
+            visualWeight = 0.5f;
+        }
+
+        ProgressManager.Instance.SetWeights(phonologyWeight, visualWeight);
+
+        // ── Log ML Output ──────────────────────────────────────────
+        Debug.Log($"[Session] ── Hasil Prediksi PURE ML ──────────────────────\n" +
                   $"  Accuracy        : {sessionMetrics.accuracy:P0}\n" +
                   $"  Hint rate       : {sessionMetrics.hint_rate:P0}\n" +
                   $"  Diff sebelum    : {diffBefore}\n" +
-                  $"  Rule Engine     : {diffBefore} → {diffBefore + ruleChange} (change={ruleChange:+0;-0;0})\n" +
-                  $"  ML Model        : {diffBefore} → {diffBefore + mlChange} (change={mlChange:+0;-0;0})\n" +
-                  $"  DIPAKAI         : {(useML ? "ML" : "Rule Engine")}\n" +
-                  (ruleChange != mlChange
-                      ? $"  ⚡ BEDA! ML dan Rule Engine memberikan prediksi berbeda"
-                      : $"  ✅ Sama — keduanya setuju"));
+                  $"  ML Model Change : {mlChange:+0;-0;0}\n" +
+                  $"  Diff sesudah    : {diffAfter}");
 
 
         ProgressManager.Instance.UpdateSessionStats(sessionMetrics);

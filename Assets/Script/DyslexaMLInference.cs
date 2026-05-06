@@ -81,8 +81,8 @@ public class DyslexaMLInference : MonoBehaviour
     {
         if (!_isReady)
         {
-            Debug.LogWarning("[RF] Model belum ready, fallback ke Rule Engine.");
-            return RuleEngineFallback(metrics);
+            Debug.LogWarning("[RF] Model belum ready. Fallback ke 0 (Tetap).");
+            return 0;
         }
 
         try
@@ -123,16 +123,9 @@ public class DyslexaMLInference : MonoBehaviour
         catch (Exception e)
         {
             Debug.LogError($"[RF] Inference error: {e.Message}");
-            return RuleEngineFallback(metrics);
+            return 0;
         }
     }
 
-    // ── Fallback (hanya jika model gagal load) ────────────────────
-
-    private int RuleEngineFallback(SessionMetrics metrics)
-    {
-        if (metrics.accuracy >= 0.85f && metrics.hint_rate < 0.2f) return +1;
-        if (metrics.accuracy  < 0.60f)                              return -1;
-        return 0;
-    }
+    // (Dihapus karena pure ML)
 }

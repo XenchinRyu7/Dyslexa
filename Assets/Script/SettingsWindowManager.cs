@@ -11,8 +11,6 @@ using TMPro;
 ///   - btnExcel           : Export Excel
 ///   - btnPdf             : Export HTML/PDF
 ///   - btnClose           : Tutup window
-///   - adaptiveModeToggle : Toggle — OFF=Rule Engine, ON=Machine Learning
-///   - adaptiveModeLabel  : TextMeshPro label status (opsional)
 /// </summary>
 public class SettingsWindowManager : MonoBehaviour
 {
@@ -25,18 +23,9 @@ public class SettingsWindowManager : MonoBehaviour
     public Button btnPdf;
     public Button btnClose;
 
-    [Header("Adaptive Mode")]
-    [Tooltip("Toggle: OFF = Rule Engine, ON = Machine Learning")]
-    public Toggle adaptiveModeToggle;
-    [Tooltip("Label status mode aktif (opsional)")]
-    public TextMeshProUGUI adaptiveModeLabel;
-
-    // PlayerPrefs key
-    private const string KEY_ADAPTIVE_MODE = "AdaptiveMode";
-
-    // 0 = Rule Engine, 1 = ML
-    public static int  CurrentAdaptiveMode => PlayerPrefs.GetInt(KEY_ADAPTIVE_MODE, 0);
-    public static bool UseML              => CurrentAdaptiveMode == 1;
+    // AdaptiveMode secara permanen ML (1), properties dihilangkan untuk UI,
+    // tetapi kita masih menyediakan properti ini jika dibutuhkan backward compat
+    public static bool UseML => true;
 
     void Start()
     {
@@ -49,36 +38,7 @@ public class SettingsWindowManager : MonoBehaviour
         if (btnPdf      != null) btnPdf.onClick.AddListener(OnExportPdfClicked);
         if (btnClose    != null) btnClose.onClick.AddListener(CloseSettingsWindow);
 
-        // Toggle adaptive mode
-        SetupAdaptiveToggle();
-    }
-
-    // ── Toggle Setup ───────────────────────────────────────────────
-
-    private void SetupAdaptiveToggle()
-    {
-        if (adaptiveModeToggle == null) return;
-
-        bool savedML = PlayerPrefs.GetInt(KEY_ADAPTIVE_MODE, 0) == 1;
-        adaptiveModeToggle.isOn = savedML;
-        UpdateModeLabel(savedML);
-        adaptiveModeToggle.onValueChanged.AddListener(OnAdaptiveModeChanged);
-    }
-
-    private void OnAdaptiveModeChanged(bool isOn)
-    {
-        PlayerPrefs.SetInt(KEY_ADAPTIVE_MODE, isOn ? 1 : 0);
-        PlayerPrefs.Save();
-        UpdateModeLabel(isOn);
-        Debug.Log($"[Settings] Adaptive mode: {(isOn ? "Machine Learning" : "Rule Engine")}");
-    }
-
-    private void UpdateModeLabel(bool isOn)
-    {
-        if (adaptiveModeLabel == null) return;
-        adaptiveModeLabel.text = isOn
-            ? "Mode Adaptif: <color=#10B981>Machine Learning</color>"
-            : "Mode Adaptif: <color=#3B82F6>Rule Engine</color>";
+        // Toggle adaptive mode dihilangkan, sistem selalu pure ML
     }
 
     // ── Window Visibility ─────────────────────────────────────────
@@ -87,9 +47,6 @@ public class SettingsWindowManager : MonoBehaviour
     {
         if (settingsWindow != null)
         {
-            // Sync toggle ke nilai tersimpan setiap kali dibuka
-            if (adaptiveModeToggle != null)
-                adaptiveModeToggle.isOn = PlayerPrefs.GetInt(KEY_ADAPTIVE_MODE, 0) == 1;
 
             settingsWindow.SetActive(true);
             Debug.Log("[Settings] Window dibuka.");
