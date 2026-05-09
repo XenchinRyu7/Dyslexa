@@ -138,12 +138,15 @@ public class PlayerProfileManager : MonoBehaviour
     {
         if (allProfiles.Count == 0)
         {
-            Debug.LogWarning("[ProfileManager] No profiles to export.");
+            string msg = "Tidak ada profil untuk diekspor.";
+            Debug.LogWarning($"[ProfileManager] {msg}");
+            ShowAndroidToast(msg);
             return;
         }
 
-        // We will save the CSV in the persistent data path
-        string csvPath = Path.Combine(Application.persistentDataPath, "ExportedData_Dyslexa.csv");
+        // Simpan ke Persistent Data Path (Bisa dibaca di PC / Smart TV lewat File Explorer)
+        string fileName = "Laporan_Dyslexa_" + System.DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".csv";
+        string csvPath = Path.Combine(Application.persistentDataPath, fileName);
 
         // Use StringBuilder to build the CSV string
         StringBuilder sb = new StringBuilder();
@@ -161,16 +164,52 @@ public class PlayerProfileManager : MonoBehaviour
         try
         {
             File.WriteAllText(csvPath, sb.ToString());
-            Debug.Log($"[ProfileManager] Successfully exported data to CSV at: {csvPath}");
+            string successMsg = $"Data berhasil diekspor ke:\n{csvPath}";
+            Debug.Log($"[ProfileManager] {successMsg}");
+            ShowAndroidToast("Export Sukses! File tersimpan.");
+
+            #if UNITY_EDITOR || UNITY_STANDALONE
+            // Di PC / Mac / Smart TV (Standalone), langsung buka foldernya atau filenya
+            Application.OpenURL("file://" + csvPath);
+            #elif UNITY_ANDROID
+            // --- CARA MENGGUNAKAN NATIVE SHARE (ANDROID) ---
+            // 1. Download plugin gratis "Native Share for Android & iOS" dari Unity Asset Store
+            // 2. Import ke dalam project Unity Anda
+            // 3. Hapus tanda komentar (//) pada 2 baris kode di bawah ini:
             
-            // On Windows/Mac editor, this will help you find the file easily
-            #if UNITY_EDITOR
-            UnityEditor.EditorUtility.RevealInFinder(csvPath);
+            new NativeShare().AddFile(csvPath).SetSubject("Laporan Dyslexa").SetText("Berikut lampiran data CSV.").Share();
+            ShowAndroidToast("Membuka menu Share Android...");
             #endif
         }
-        catch (IOException ex)
+        catch (System.Exception ex)
         {
-            Debug.LogError($"[ProfileManager] Failed to export CSV: {ex.Message}");
+            string errorMsg = $"Gagal mengekspor CSV: {ex.Message}";
+            Debug.LogError($"[ProfileManager] {errorMsg}");
+            ShowAndroidToast("Error: " + ex.Message);
         }
+    }
+
+    // --- ANDROID TOAST HELPER ---
+    public void ShowAndroidToast(string message)
+    {
+        #if UNITY_ANDROID && !UNITY_EDITOR
+        try
+        {
+            AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
+            AndroidJavaObject currentActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
+            AndroidJavaClass toastClass = new AndroidJavaClass("android.widget.Toast");
+            
+            currentActivity.Call("runOnUiThread", new AndroidJavaRunnable(() =>
+            {
+                // Instantiate the Toast
+                AndroidJavaObject toastObject = toastClass.CallStatic<AndroidJavaObject>("makeText", currentActivity, message, 1);
+                toastObject.Call("show");
+            }));
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError("[ProfileManager] Gagal memunculkan Android Toast: " + e.Message);
+        }
+        #endif
     }
 }

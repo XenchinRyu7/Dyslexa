@@ -610,7 +610,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 189399429}
-  - component: {fileID: 189399428}
   - component: {fileID: 189399427}
   - component: {fileID: 189399430}
   m_Layer: 0
@@ -632,23 +631,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 51b7fa59e8310b048bd615556b15a998, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DataExportManager
---- !u!114 &189399428
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 189399426}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fcdce73d69150a9479efd61c1e12b036, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SettingsWindowManager
-  settingsWindow: {fileID: 278911035}
-  btnSettings: {fileID: 1681585850}
-  btnExcel: {fileID: 1270010784}
-  btnPdf: {fileID: 1291961843}
-  btnClose: {fileID: 1855203341}
 --- !u!4 &189399429
 Transform:
   m_ObjectHideFlags: 0
@@ -2603,6 +2585,7 @@ GameObject:
   - component: {fileID: 1759827197}
   - component: {fileID: 1759827196}
   - component: {fileID: 1759827200}
+  - component: {fileID: 1759827201}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -2714,6 +2697,23 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MainNavigation
   exitConfirmationWindow: {fileID: 1705558219}
   nameInputField: {fileID: 0}
+--- !u!114 &1759827201
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1759827195}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fcdce73d69150a9479efd61c1e12b036, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SettingsWindowManager
+  settingsWindow: {fileID: 278911035}
+  btnSettings: {fileID: 1681585850}
+  btnExcel: {fileID: 1270010784}
+  btnPdf: {fileID: 1291961843}
+  btnClose: {fileID: 1855203341}
 --- !u!1 &1778833582
 GameObject:
   m_ObjectHideFlags: 0
@@ -2975,6 +2975,7 @@ GameObject:
   - component: {fileID: 2003372139}
   - component: {fileID: 2003372138}
   - component: {fileID: 2003372137}
+  - component: {fileID: 2003372140}
   m_Layer: 5
   m_Name: ContinueGameButton
   m_TagString: Untagged
@@ -3096,6 +3097,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2003372135}
   m_CullTransparentMesh: 1
+--- !u!114 &2003372140
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2003372135}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 324b1ac5c1232a4489d98032610de789, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ContinueButtonState
 --- !u!1 &2109344330
 GameObject:
   m_ObjectHideFlags: 0

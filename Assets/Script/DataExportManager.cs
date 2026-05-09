@@ -155,11 +155,17 @@ public class DataExportManager : MonoBehaviour
         {
             File.WriteAllText(xlsPath, sb.ToString(), Encoding.UTF8);
             Debug.Log($"[DataExport] Excel berhasil disimpan di: {xlsPath}");
-            OpenInExplorer(xlsPath);
+            
+            if (PlayerProfileManager.Instance != null)
+                PlayerProfileManager.Instance.ShowAndroidToast("Export Excel Sukses! File tersimpan.");
+                
+            OpenInExplorer(xlsPath, "Laporan Excel Dyslexa");
         }
         catch (IOException ex)
         {
             Debug.LogError($"[DataExport] Gagal menyimpan Excel: {ex.Message}");
+            if (PlayerProfileManager.Instance != null)
+                PlayerProfileManager.Instance.ShowAndroidToast("Export Excel Gagal!");
         }
     }
 
@@ -185,12 +191,16 @@ public class DataExportManager : MonoBehaviour
             File.WriteAllText(htmlPath, html, Encoding.UTF8);
             Debug.Log($"[DataExport] HTML Report berhasil disimpan di: {htmlPath}");
 
-            // Buka file di browser default (user bisa Ctrl+P → Save as PDF)
-            Application.OpenURL("file://" + htmlPath);
+            if (PlayerProfileManager.Instance != null)
+                PlayerProfileManager.Instance.ShowAndroidToast("Export PDF/HTML Sukses! File tersimpan.");
+
+            OpenInExplorer(htmlPath, "Laporan PDF Dyslexa");
         }
         catch (IOException ex)
         {
             Debug.LogError($"[DataExport] Gagal menyimpan HTML Report: {ex.Message}");
+            if (PlayerProfileManager.Instance != null)
+                PlayerProfileManager.Instance.ShowAndroidToast("Export PDF Gagal!");
         }
     }
 
@@ -301,7 +311,7 @@ public class DataExportManager : MonoBehaviour
             .Replace("'",  "&apos;");
     }
 
-    private void OpenInExplorer(string filePath)
+    private void OpenInExplorer(string filePath, string subjectTitle = "Laporan Dyslexa")
     {
 #if UNITY_EDITOR
         UnityEditor.EditorUtility.RevealInFinder(filePath);
@@ -309,6 +319,26 @@ public class DataExportManager : MonoBehaviour
         // Buka folder tempat file disimpan di Windows
         string folder = Path.GetDirectoryName(filePath);
         System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{filePath}\"");
+#elif UNITY_ANDROID
+        try
+        {
+            // Memanggil NativeShare yang sudah di-install user
+            new NativeShare()
+                .AddFile(filePath)
+                .SetSubject(subjectTitle)
+                .SetText("Berikut lampiran data permainan anak.")
+                .Share();
+                
+            if (PlayerProfileManager.Instance != null)
+                PlayerProfileManager.Instance.ShowAndroidToast("Membuka menu Share Android...");
+        }
+        catch (Exception e)
+        {
+            Debug.LogError("[DataExport] NativeShare Error: " + e.Message);
+            Application.OpenURL("file://" + filePath); // Fallback
+        }
+#else
+        Application.OpenURL("file://" + filePath);
 #endif
         Debug.Log($"[DataExport] File disimpan di: {filePath}");
     }

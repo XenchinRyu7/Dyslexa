@@ -261,6 +261,7 @@ public class QuestionGenerator : MonoBehaviour
         object[] entry = blendingBank[Random.Range(0, Mathf.Min(poolEnd, blendingBank.Length))];
 
         string   correctImg    = (string)entry[0];
+
         string[] syllableAudio = (string[])entry[1];
         string   distractor1   = (string)entry[2];
         string   distractor2   = (string)entry[3];

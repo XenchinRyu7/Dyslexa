@@ -29,6 +29,30 @@ public class MainNavigation : MonoBehaviour
 
     public void LoadContinue()
     {
+        // Cek jika belum ada profil sama sekali
+        if (PlayerProfileManager.Instance != null && PlayerProfileManager.Instance.GetAllProfiles().Count == 0)
+        {
+            // Tampilkan popup android
+            PlayerProfileManager.Instance.ShowAndroidToast("Silakan buat profil baru terlebih dahulu!");
+            
+            // Ubah warna tombol jadi abu-abu hex #333333
+            GameObject clickedButton = UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject;
+            if (clickedButton != null)
+            {
+                UnityEngine.UI.Image btnImage = clickedButton.GetComponent<UnityEngine.UI.Image>();
+                if (btnImage != null)
+                {
+                    Color greyColor;
+                    if (ColorUtility.TryParseHtmlString("#333333", out greyColor))
+                    {
+                        btnImage.color = greyColor;
+                    }
+                }
+            }
+            Debug.LogWarning("[MainNavigation] Akses ditolak: Tidak ada profil tersimpan.");
+            return; // Batalkan pindah scene
+        }
+
         SceneManager.LoadScene("ContinueGame");
     }
 
