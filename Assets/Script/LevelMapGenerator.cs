@@ -63,6 +63,8 @@ public class LevelMapGenerator : MonoBehaviour
 
     void UpdateNodeStates()
     {
+        string mode = PlayerPrefs.GetString("SelectedGameMode", "Visual");
+
         for (int i = 0; i < levelNodes.Length; i++)
         {
             if (levelNodes[i] != null)
@@ -71,6 +73,10 @@ public class LevelMapGenerator : MonoBehaviour
                 if (i <= currentUnlockedNode)
                 {
                     levelNodes[i].SetState(NodeState.Unlocked);
+
+                    // Ambil dan set bintang dari Database
+                    int earnedStars = ProgressManager.Instance.GetStarsForNode(mode, i);
+                    levelNodes[i].SetStars(earnedStars);
                 }
                 else
                 {
@@ -125,8 +131,8 @@ public class LevelMapGenerator : MonoBehaviour
 
     public static void CheckAndUnlockNode(SessionMetrics metrics)
     {
-        // Mastery rule: If accuracy >= 0.8, unlock next node
-        if (metrics.accuracy >= 0.8f)
+        // Mastery rule: If accuracy >= 0.5 (2 Bintang), unlock next node
+        if (metrics.accuracy >= 0.5f)
         {
             int currentUnlocked = ProgressManager.Instance.GetCurrentUnlockedNode();
             int totalNodes = 10; // Should match the map

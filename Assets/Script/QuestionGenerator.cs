@@ -62,7 +62,7 @@ public class QuestionGenerator : MonoBehaviour
         new object[] { "Image/Segmenting/broom",       new string[]{"Audio/Blending/Sapu/sa",  "Audio/Blending/Sapu/pu"},                                "Image/Segmenting/bread",    "Image/Segmenting/shirt",   "Image/Segmenting/hat"      }, // SAPU
         new object[] { "Image/Segmenting/chicken",     new string[]{"Audio/Blending/Ayam/ay",  "Audio/Blending/Ayam/yam"},                               "Image/Segmenting/fish",     "Image/Segmenting/cat",     "Image/Segmenting/horse"    }, // AYAM
         new object[] { "Image/Segmenting/hat",         new string[]{"Audio/Blending/Topi/to",  "Audio/Blending/Topi/pi"},                                "Image/Segmenting/shirt",    "Image/Segmenting/broom",   "Image/Segmenting/bread"    }, // TOPI
-        new object[] { "Image/Segmenting/cat",         new string[]{"Audio/Blending/Kucing/ku","Audio/Blending/Kucing/ci","Audio/Blending/Kucing/ng"},   "Image/Segmenting/horse",    "Image/Segmenting/chicken", "Image/Segmenting/fish"     }, // KUCING
+        new object[] { "Image/Segmenting/cat",         new string[]{"Audio/Blending/Kucing/ku","Audio/Blending/Kucing/cing"},                            "Image/Segmenting/horse",    "Image/Segmenting/chicken", "Image/Segmenting/fish"     }, // KUCING
         new object[] { "Image/Segmenting/camera",      new string[]{"Audio/Blending/Kamera/ka","Audio/Blending/Kamera/me","Audio/Blending/Kamera/ra"},  "Image/Segmenting/car",      "Image/Segmenting/home",    "Image/Segmenting/table"    }, // KAMERA
     };
 
@@ -87,17 +87,19 @@ public class QuestionGenerator : MonoBehaviour
         new object[] { "Image/Segmenting/eyes",        new string[]{"MA","TA"}, new string[]{"MA","TA","TU"}, new string[]{"Audio/Segmenting/MATA/ma","Audio/Segmenting/MATA/ta","Audio/Segmenting/MATA/tu"}, "BO", "Audio/Segmenting/BOLA/bo"  }, // MATA
         new object[] { "Image/Segmenting/table",       new string[]{"ME","JA"}, new string[]{"ME","JA","JO"}, new string[]{"Audio/Segmenting/MEJA/me","Audio/Segmenting/MEJA/ja","Audio/Segmenting/MEJA/jo"}, "KU", "Audio/Segmenting/KUDA/ku"  }, // MEJA
         new object[] { "Image/Segmenting/shirt",       new string[]{"BA","JU"}, new string[]{"BA","JU","JA"}, new string[]{"Audio/Segmenting/BAJU/ba","Audio/Segmenting/BAJU/ju","Audio/Segmenting/BAJU/ja"}, "ME", "Audio/Segmenting/MEJA/me"  }, // BAJU
+        new object[] { "Image/Segmenting/gigi",        new string[]{"GI","GI"}, new string[]{"GI","GI","GA","GU"}, new string[]{"Audio/Segmenting/GIGI/gi","Audio/Segmenting/GIGI/gi","Audio/Segmenting/GIGI/ga","Audio/Segmenting/GIGI/gu"}, "BO", "Audio/Segmenting/BOLA/bo" }, // GIGI
+        new object[] { "Image/Segmenting/rusa",        new string[]{"RU","SA"}, new string[]{"RU","SA","SU"}, new string[]{"Audio/Segmenting/RUSA/ru","Audio/Segmenting/RUSA/sa","Audio/Segmenting/RUSA/su"}, "TI", "Audio/Segmenting/ROTI/ti" }, // RUSA
 
-        // === KATA TANPA AUDIO (audio menyusul) ===
-        new object[] { "Image/Segmenting/home",     new string[]{"RU","MAH"},  new string[]{"RU","MAH","BAH"},  new string[]{"","",""}, "TA",  "" }, // RUMAH
-        new object[] { "Image/Segmenting/cat",      new string[]{"KU","CING"}, new string[]{"KU","CING","SING"},new string[]{"","",""}, "BO",  "" }, // KUCING
-        new object[] { "Image/Segmenting/fish",     new string[]{"I","KAN"},   new string[]{"I","KAN","PAN"},   new string[]{"","",""}, "MA",  "" }, // IKAN
-        new object[] { "Image/Segmenting/door",     new string[]{"PIN","TU"},  new string[]{"PIN","TU","DU"},   new string[]{"","",""}, "BO",  "" }, // PINTU
-        new object[] { "Image/Segmenting/armchair", new string[]{"KUR","SI"},  new string[]{"KUR","SI","NI"},   new string[]{"","",""}, "MA",  "" }, // KURSI
-        new object[] { "Image/Segmenting/broom",    new string[]{"SA","PU"},   new string[]{"SA","PU","BU"},    new string[]{"","",""}, "TA",  "" }, // SAPU
-        new object[] { "Image/Segmenting/chicken",  new string[]{"A","YAM"},   new string[]{"A","YAM","LAM"},  new string[]{"","",""}, "BO",  "" }, // AYAM
-        new object[] { "Image/Segmenting/hat",      new string[]{"TO","PI"},   new string[]{"TO","PI","BI"},    new string[]{"","",""}, "MA",  "" }, // TOPI
-        new object[] { "Image/Segmenting/car",      new string[]{"MO","BIL"},  new string[]{"MO","BIL","NIL"},  new string[]{"","",""}, "TA",  "" }, // MOBIL
+        // === KATA TANPA AUDIO KHUSUS SEGMENTING (Minjem dari Blending) ===
+        new object[] { "Image/Segmenting/home",     new string[]{"RU","MAH"},  new string[]{"RU","MAH","BAH"},  new string[]{"Audio/Blending/Rumah/rum","Audio/Blending/Rumah/ah",""}, "TA",  "" }, // RUMAH
+        new object[] { "Image/Segmenting/cat",      new string[]{"KU","CING"}, new string[]{"KU","CING","SING"},new string[]{"Audio/Blending/Kucing/ku","Audio/Blending/Kucing/cing",""}, "BO",  "" }, // KUCING
+        new object[] { "Image/Segmenting/fish",     new string[]{"I","KAN"},   new string[]{"I","KAN","PAN"},   new string[]{"Audio/Blending/Ikan/ik","Audio/Blending/Ikan/an",""}, "MA",  "" }, // IKAN
+        new object[] { "Image/Segmenting/door",     new string[]{"PIN","TU"},  new string[]{"PIN","TU","DU"},   new string[]{"Audio/Blending/Pintu/pin","Audio/Blending/Pintu/tu",""}, "BO",  "" }, // PINTU
+        new object[] { "Image/Segmenting/armchair", new string[]{"KUR","SI"},  new string[]{"KUR","SI","NI"},   new string[]{"Audio/Blending/Kursi/kur","Audio/Blending/Kursi/si",""}, "MA",  "" }, // KURSI
+        new object[] { "Image/Segmenting/broom",    new string[]{"SA","PU"},   new string[]{"SA","PU","BU"},    new string[]{"Audio/Blending/Sapu/sa","Audio/Blending/Sapu/pu",""}, "TA",  "" }, // SAPU
+        new object[] { "Image/Segmenting/chicken",  new string[]{"A","YAM"},   new string[]{"A","YAM","LAM"},   new string[]{"Audio/Blending/Ayam/ay","Audio/Blending/Ayam/yam",""}, "BO",  "" }, // AYAM
+        new object[] { "Image/Segmenting/hat",      new string[]{"TO","PI"},   new string[]{"TO","PI","BI"},    new string[]{"Audio/Blending/Topi/to","Audio/Blending/Topi/pi",""}, "MA",  "" }, // TOPI
+        new object[] { "Image/Segmenting/car",      new string[]{"MO","BIL"},  new string[]{"MO","BIL","NIL"},  new string[]{"Audio/Blending/Mobil/mo","Audio/Blending/Mobil/bil",""}, "TA",  "" }, // MOBIL
     };
 
 

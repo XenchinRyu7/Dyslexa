@@ -15,6 +15,10 @@ public class GameProgress
     public float visualWeight           = 0.5f;
     public int   totalSessionsCompleted = 0;
     public float overallAccuracy        = 0f;
+
+    // Bintang per level (maksimal 20 level per mode misalnya)
+    public int[] nodeStarsVisual    = new int[20];
+    public int[] nodeStarsFonologis = new int[20];
 }
 
 public class ProgressManager : MonoBehaviour
@@ -140,6 +144,51 @@ public class ProgressManager : MonoBehaviour
         SaveProgress();
     }
 
+    public void UnlockNextNode(string mode, int currentNodeIndex)
+    {
+        if (mode == "Visual")
+        {
+            if (progress.unlockedNodeVisual <= currentNodeIndex)
+                progress.unlockedNodeVisual = currentNodeIndex + 1;
+        }
+        else
+        {
+            if (progress.unlockedNodeFonologis <= currentNodeIndex)
+                progress.unlockedNodeFonologis = currentNodeIndex + 1;
+        }
+        SaveProgress();
+    }
+
+    /// <summary>
+    /// Simpan bintang tertinggi yang pernah diraih di suatu level.
+    /// </summary>
+    public void SaveStars(string mode, int nodeIndex, int starsEarned)
+    {
+        if (nodeIndex < 0 || nodeIndex >= 20) return; // Asumsi max 20 level
+
+        if (mode == "Visual")
+        {
+            if (starsEarned > progress.nodeStarsVisual[nodeIndex])
+                progress.nodeStarsVisual[nodeIndex] = starsEarned;
+        }
+        else if (mode == "Fonologis")
+        {
+            if (starsEarned > progress.nodeStarsFonologis[nodeIndex])
+                progress.nodeStarsFonologis[nodeIndex] = starsEarned;
+        }
+        SaveProgress();
+    }
+
+    public int GetStarsForNode(string mode, int nodeIndex)
+    {
+        if (nodeIndex < 0 || nodeIndex >= 20) return 0;
+        if (mode == "Visual") return progress.nodeStarsVisual[nodeIndex];
+        return progress.nodeStarsFonologis[nodeIndex];
+    }
+
+    private static bool IsFonologis()
+        => UnityEngine.PlayerPrefs.GetString("SelectedGameMode", "Visual") == "Fonologis";
+
     public int GetCurrentUnlockedNode()
     {
         return IsFonologis() ? progress.unlockedNodeFonologis : progress.unlockedNodeVisual;
@@ -151,9 +200,6 @@ public class ProgressManager : MonoBehaviour
         else               progress.unlockedNodeVisual    = nodeIndex;
         SaveProgress();
     }
-
-    private static bool IsFonologis()
-        => UnityEngine.PlayerPrefs.GetString("SelectedGameMode", "Visual") == "Fonologis";
 
     public void UpdateSessionStats(SessionMetrics metrics)
     {

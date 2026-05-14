@@ -126,6 +126,4 @@ public class DyslexaMLInference : MonoBehaviour
             return 0;
         }
     }
-
-    // (Dihapus karena pure ML)
 }

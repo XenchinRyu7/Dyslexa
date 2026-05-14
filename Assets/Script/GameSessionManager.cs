@@ -16,11 +16,30 @@ public class GameSessionManager : MonoBehaviour
     public TextMeshProUGUI feedbackText;
     public GameObject feedbackPanel;
     public Button backToMapButton;
+    public Button btnRetry; // Tombol ulangi level
+
+    [Header("UI Feedback (Stars & Audio)")]
+    public GameObject starContainerObj; // Masukkan objek "StarContainer" ke sini
+    public Unity.VectorGraphics.SVGImage[] starImages; // SVG Image star1, star2, star3
+    public Sprite starFilled;       // Sprite bintang kuning/penuh
+    public Sprite starEmpty;        // Sprite bintang abu-abu/kosong
+    public AudioSource feedbackAudio; // "Speaker" SATU SAJA untuk memutar semua suara
+    public AudioClip winSound;        // File audio "game_completed.wav"
+    public AudioClip loseSound;       // File audio "game_over.mp3"
+    public AudioClip correctSound;    // File audio "right.mp3" (benar per soal)
+    public AudioClip wrongSound;      // File audio "wrong.mp3" (salah per soal)
 
     [Header("Hint")]
     public Button hintButton;                   // Tombol Bantuan
     public TextMeshProUGUI hintCountText;        // Teks "Bantuan (3)"
     public int maxHintsPerSession = 3;           // Max hint per session
+
+    [Header("Pause Menu")]
+    public GameObject pausePanel;
+    public Button btnPause;             // Tombol Pause di pojok layar
+    public Button btnPauseContinue;     // Tombol Lanjut di dalam panel
+    public Button btnPauseRetry;        // Tombol Ulangi di dalam panel
+    public Button btnPauseBackToMap;    // Tombol Keluar di dalam panel
 
     [Header("Panel Prefabs (instantiate saat soal muncul)")]
     public GameObject prefabVisualLetter;    // VisualLetter.prefab
@@ -91,6 +110,34 @@ public class GameSessionManager : MonoBehaviour
             backToMapButton.gameObject.SetActive(false);
             backToMapButton.onClick.AddListener(() => SceneManager.LoadScene("LevelMap"));
         }
+
+        if (btnRetry != null)
+        {
+            btnRetry.gameObject.SetActive(false);
+            btnRetry.onClick.AddListener(() => SceneManager.LoadScene(SceneManager.GetActiveScene().name));
+        }
+
+        // --- PAUSE MENU SETUP ---
+        if (pausePanel != null) pausePanel.SetActive(false);
+        if (btnPause != null) btnPause.onClick.AddListener(() => TogglePause(true));
+        if (btnPauseContinue != null) btnPauseContinue.onClick.AddListener(() => TogglePause(false));
+        
+        if (btnPauseRetry != null) 
+        {
+            btnPauseRetry.onClick.AddListener(() => {
+                Time.timeScale = 1f; // Wajib reset waktu sebelum load ulang
+                SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            });
+        }
+        
+        if (btnPauseBackToMap != null) 
+        {
+            btnPauseBackToMap.onClick.AddListener(() => {
+                Time.timeScale = 1f; // Wajib reset waktu sebelum pindah scene
+                SceneManager.LoadScene("LevelMap");
+            });
+        }
+        // ------------------------
 
         // Hint setup — adaptif berdasarkan difficulty
         // Difficulty 1-2 → 3 hint (mudah, lebih banyak bantuan)
@@ -334,16 +381,28 @@ public class GameSessionManager : MonoBehaviour
         if (activePanelInstance != null)
             activePanelInstance.SetActive(false);
 
-        // 2. Tampilkan feedback benar/salah (tanpa backToMapButton)
+        // 2. Tampilkan feedback benar/salah (tanpa backToMapButton, btnRetry, dan tanpa bintang)
         if (feedbackPanel != null) feedbackPanel.SetActive(true);
         if (backToMapButton != null) backToMapButton.gameObject.SetActive(false); // hide saat mid-feedback
+        if (btnRetry != null) btnRetry.gameObject.SetActive(false);               // hide saat mid-feedback
+        if (starContainerObj != null) starContainerObj.SetActive(false);          // HIDE bintang di tengah game
+        
+        // 3. Mainkan Audio Benar/Salah (pakai speaker yang sama)
+        if (feedbackAudio != null)
+        {
+            if (isCorrect && correctSound != null)
+                feedbackAudio.PlayOneShot(correctSound);
+            else if (!isCorrect && wrongSound != null)
+                feedbackAudio.PlayOneShot(wrongSound);
+        }
+
         if (feedbackText != null)
         {
             feedbackText.text  = isCorrect ? "Benar!" : "Salah";
             feedbackText.color = isCorrect ? Color.green : Color.red;
         }
 
-        // 3. Tunggu 1 detik
+        // 4. Tunggu 1 detik
         yield return new WaitForSeconds(1f);
 
         // 4. Hide feedback
@@ -433,20 +492,86 @@ public class GameSessionManager : MonoBehaviour
             activePanelInstance = null;
         }
 
-        // Tampilkan ringkasan di feedbackPanel + backToMapButton
+        // Tampilkan ringkasan di feedbackPanel + backToMapButton + btnRetry + Bintang
         if (feedbackPanel != null) feedbackPanel.SetActive(true);
         if (backToMapButton != null) backToMapButton.gameObject.SetActive(true); // show hanya di akhir session
+        if (btnRetry != null) btnRetry.gameObject.SetActive(true);               // show di akhir session
+        if (starContainerObj != null) starContainerObj.SetActive(true);          // SHOW bintang di akhir game
+        if (progressContainer != null) progressContainer.gameObject.SetActive(false); // HIDE progress bar biar bersih
+
+        float acc = sessionMetrics.accuracy;
+
+        // Hitung jumlah bintang (0 sampai 3)
+        int starCount = 0;
+        if (acc >= 0.8f) starCount = 3;       // Akurasi >= 80% dapet 3 Bintang
+        else if (acc >= 0.5f) starCount = 2;  // Akurasi >= 50% dapet 2 Bintang
+        else if (acc > 0.0f) starCount = 1;   // Di bawah 50% dapet 1 Bintang
+
+        // --- SIMPAN KE DATABASE / PROGRESS MANAGER ---
+        // Biar nanti level map bisa tau dapet berapa bintang tertinggi di level ini
+        ProgressManager.Instance.SaveStars(selectedMode, nodeIndex, starCount);
+
+        // Update UI Bintang
+        if (starImages != null && starImages.Length >= 3)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                // Kalau i kurang dari jumlah bintang, pakai gambar penuh. Kalau nggak, gambar kosong.
+                starImages[i].sprite = (i < starCount) ? starFilled : starEmpty;
+            }
+        }
+
+        // Mainkan Suara Kemenangan atau Kekalahan
+        if (feedbackAudio != null)
+        {
+            if (starCount > 0 && winSound != null)
+            {
+                feedbackAudio.PlayOneShot(winSound);
+            }
+            else if (starCount == 0 && loseSound != null)
+            {
+                feedbackAudio.PlayOneShot(loseSound);
+            }
+        }
+
         if (feedbackText != null)
         {
-            float acc  = sessionMetrics.accuracy;
-            string msg = acc >= 0.70f ? "Kerja Bagus!" : "Ayo Coba Lagi! Semangat";
-
-            feedbackText.text =
-                $"<b>{msg}</b>\n\n" +
-                $"Benar: {sessionMetrics.jumlah_benar}/{sessionMetrics.total_soal}";
+            feedbackText.text = $"Benar: {sessionMetrics.jumlah_benar}/{sessionMetrics.total_soal}";
+            feedbackText.color = Color.white; // Reset warna teks biar gak nyangkut merah/hijau dari soal terakhir
         }
         // backToMapButton sudah visible sejak Start() — tidak perlu show lagi di sini
     }
 
     public SessionMetrics GetSessionMetrics() => sessionMetrics;
+
+    // =============================================
+    // PAUSE MENU
+    // =============================================
+    public void TogglePause(bool isPaused)
+    {
+        if (pausePanel != null)
+        {
+            pausePanel.SetActive(isPaused);
+        }
+        
+        // Hentikan waktu di Unity (0 = berhenti, 1 = normal)
+        Time.timeScale = isPaused ? 0f : 1f;
+
+        // --- Sembunyikan elemen lain saat Pause ---
+        if (activePanelInstance != null)
+        {
+            activePanelInstance.SetActive(!isPaused); // Hilang pas pause, muncul pas lanjut
+        }
+
+        if (progressContainer != null)
+        {
+            progressContainer.gameObject.SetActive(!isPaused);
+        }
+
+        if (hintButton != null)
+        {
+            hintButton.gameObject.SetActive(!isPaused);
+        }
+        // ------------------------------------------
+    }
 }
