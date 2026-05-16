@@ -7,9 +7,36 @@ public class ChooseModeManager : MonoBehaviour
     [Header("UI Profile Info")]
     public TextMeshProUGUI greetingText;   // Contoh: "Halo, Budi!"
 
+    [Header("Tutorial References")]
+    public RectTransform btnVisual;
+    public RectTransform btnFonologis;
+
     void Start()
     {
         DisplayActiveProfile();
+        StartCoroutine(RunTutorialNextFrame());
+    }
+
+    private System.Collections.IEnumerator RunTutorialNextFrame()
+    {
+        yield return new WaitForSeconds(0.5f); // Tunggu UI render selesai
+        if (TutorialManager.Instance != null && btnVisual != null && btnFonologis != null)
+        {
+            var steps = new System.Collections.Generic.List<TutorialStep>
+            {
+                new TutorialStep {
+                    targetRect = btnFonologis,
+                    text = "Pilih Fonologis untuk belajar bunyi huruf!",
+                    requiresExactClick = false // Bebas klik dimana saja untuk lanjut
+                },
+                new TutorialStep {
+                    targetRect = btnVisual,
+                    text = "Pilih Visual untuk tebak bentuk huruf!",
+                    requiresExactClick = false
+                }
+            };
+            TutorialManager.Instance.StartSequence("Tutorial_ChooseMode", steps);
+        }
     }
 
     private void DisplayActiveProfile()

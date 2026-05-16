@@ -95,4 +95,19 @@ public class VisualLetterPanel : MonoBehaviour, IHintable
         if (img != null) img.color = new Color(1f, 0.25f, 0.25f, 0.6f); // merah = salah
         Debug.Log($"[Hint-Visual] Eliminasi opsi: {pick}");
     }
+
+    public RectTransform GetCorrectButton()
+    {
+        if (answerButtons == null || currentQuestion == null) return null;
+        for (int i = 0; i < answerButtons.Length; i++)
+        {
+            if (answerButtons[i] == null) continue;
+            TextMeshProUGUI lbl = answerButtons[i].GetComponentInChildren<TextMeshProUGUI>();
+            if (lbl != null && lbl.text == currentQuestion.correctAnswer)
+            {
+                return answerButtons[i].GetComponent<RectTransform>();
+            }
+        }
+        return null;
+    }
 }

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System;
 using UnityEngine;
 
 public class PlayerProfileManager : MonoBehaviour
@@ -37,8 +38,17 @@ public class PlayerProfileManager : MonoBehaviour
     // 1. Call this when pressing OK on "NewGame" (Input Name) scene
     public void SetTempName(string name)
     {
-        tempName = name;
+        tempName = name.Trim();
         Debug.Log($"[ProfileManager] Temp Name set to: {tempName}");
+    }
+
+    public bool IsProfileNameTaken(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return false;
+
+        string normalizedName = name.Trim();
+        return allProfiles.Exists(profile =>
+            string.Equals(profile.playerName?.Trim(), normalizedName, StringComparison.OrdinalIgnoreCase));
     }
 
     // 2. Call this when pressing OK on "OnboardingAge" scene

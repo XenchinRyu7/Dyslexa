@@ -295,6 +295,87 @@ public class GameSessionManager : MonoBehaviour
         }
 
         Debug.Log($"[GameSession] Panel spawned: {q.type}");
+
+        // --- TUTORIAL HOOK ---
+        if (TutorialManager.Instance != null)
+        {
+            StartCoroutine(RunTutorialSequence(q));
+        }
+    }
+
+    private System.Collections.IEnumerator RunTutorialSequence(Question q)
+    {
+        yield return new WaitForSeconds(0.5f); // Tunggu UI render
+
+        // 1. Pengenalan UI Global (Cuma 1x seumur hidup)
+        if (!TutorialManager.Instance.IsTutorialCompleted("Tutorial_GameUI"))
+        {
+            var uiSteps = new List<TutorialStep>();
+            if (progressContainer != null)
+                uiSteps.Add(new TutorialStep { targetRect = progressContainer.GetComponent<RectTransform>(), text = "Isi bar ini buat menang!", requiresExactClick = false });
+            if (hintButton != null)
+                uiSteps.Add(new TutorialStep { targetRect = hintButton.GetComponent<RectTransform>(), text = "Klik tombol ini buat minta tolong!", requiresExactClick = false });
+            if (btnPause != null)
+                uiSteps.Add(new TutorialStep { targetRect = btnPause.GetComponent<RectTransform>(), text = "Klik ini buat jeda main.", requiresExactClick = false });
+            
+            TutorialManager.Instance.StartSequence("Tutorial_GameUI", uiSteps);
+            
+            // TUNGGU sampai tutorial UI selesai dimainkan oleh player, 
+            // baru lanjut ngecek tutorial cara menjawab (mekanik).
+            yield return new WaitWhile(() => TutorialManager.Instance.IsPlaying);
+            // Tambah sedikit delay transisi
+            yield return new WaitForSeconds(0.2f);
+        }
+
+        // 2. Pengenalan Cara Menjawab (Sesuai Mode)
+        string modeKey = "Tutorial_Mechanic_" + q.type.ToString();
+        if (!TutorialManager.Instance.IsTutorialCompleted(modeKey))
+        {
+            var answerSteps = new List<TutorialStep>();
+
+            if (q.type == QuestionType.VisualLetterRecognition)
+            {
+                var targetBtn = activePanelInstance.GetComponent<VisualLetterPanel>()?.GetCorrectButton();
+                if (targetBtn != null)
+                    answerSteps.Add(new TutorialStep { targetRect = targetBtn, text = "Pilih huruf yang bener", requiresExactClick = true, onStepComplete = () => OnAnswerSelected(q.correctAnswer) });
+            }
+            else if (q.type == QuestionType.VisualSpacing)
+            {
+                var targetBtn = activePanelInstance.GetComponent<VisualSpacingPanel>()?.GetCorrectButton();
+                if (targetBtn != null)
+                    answerSteps.Add(new TutorialStep { targetRect = targetBtn, text = "Pilih kata yang spasinya pas", requiresExactClick = true, onStepComplete = () => OnAnswerSelected(q.correctAnswer) });
+            }
+            else if (q.type == QuestionType.PhonologyBlending)
+            {
+                var targetBtn = activePanelInstance.GetComponent<FonologisBlendingPanel>()?.GetCorrectButton();
+                if (targetBtn != null)
+                    answerSteps.Add(new TutorialStep { targetRect = targetBtn, text = "Dengar suaranya & pilih gambarnya", requiresExactClick = true, onStepComplete = () => OnAnswerSelected(q.correctAnswer) });
+            }
+            else if (q.type == QuestionType.PhonologySegmenting)
+            {
+                var panel = activePanelInstance.GetComponent<FonologisSegmentingPanel>();
+                if (panel != null)
+                {
+                    // Ambil balok pertama dan slot pertama
+                    RectTransform sourceRect = panel.syllable1?.GetComponent<RectTransform>();
+                    RectTransform destRect = panel.slot1?.GetComponent<RectTransform>();
+                    if (sourceRect != null && destRect != null)
+                    {
+                        answerSteps.Add(new TutorialStep { 
+                            targetRect = sourceRect, 
+                            dragTargetRect = destRect, 
+                            text = "Tarik huruf ke kotak kosong!", 
+                            requiresExactClick = false // Anak cuma klik overlay untuk nutup tutorial, lalu narik manual
+                        });
+                    }
+                }
+            }
+
+            if (answerSteps.Count > 0)
+            {
+                TutorialManager.Instance.StartSequence(modeKey, answerSteps);
+            }
+        }
     }
 
     // =============================================

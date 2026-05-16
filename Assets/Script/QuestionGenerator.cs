@@ -87,8 +87,8 @@ public class QuestionGenerator : MonoBehaviour
         new object[] { "Image/Segmenting/eyes",        new string[]{"MA","TA"}, new string[]{"MA","TA","TU"}, new string[]{"Audio/Segmenting/MATA/ma","Audio/Segmenting/MATA/ta","Audio/Segmenting/MATA/tu"}, "BO", "Audio/Segmenting/BOLA/bo"  }, // MATA
         new object[] { "Image/Segmenting/table",       new string[]{"ME","JA"}, new string[]{"ME","JA","JO"}, new string[]{"Audio/Segmenting/MEJA/me","Audio/Segmenting/MEJA/ja","Audio/Segmenting/MEJA/jo"}, "KU", "Audio/Segmenting/KUDA/ku"  }, // MEJA
         new object[] { "Image/Segmenting/shirt",       new string[]{"BA","JU"}, new string[]{"BA","JU","JA"}, new string[]{"Audio/Segmenting/BAJU/ba","Audio/Segmenting/BAJU/ju","Audio/Segmenting/BAJU/ja"}, "ME", "Audio/Segmenting/MEJA/me"  }, // BAJU
-        new object[] { "Image/Segmenting/gigi",        new string[]{"GI","GI"}, new string[]{"GI","GI","GA","GU"}, new string[]{"Audio/Segmenting/GIGI/gi","Audio/Segmenting/GIGI/gi","Audio/Segmenting/GIGI/ga","Audio/Segmenting/GIGI/gu"}, "BO", "Audio/Segmenting/BOLA/bo" }, // GIGI
-        new object[] { "Image/Segmenting/rusa",        new string[]{"RU","SA"}, new string[]{"RU","SA","SU"}, new string[]{"Audio/Segmenting/RUSA/ru","Audio/Segmenting/RUSA/sa","Audio/Segmenting/RUSA/su"}, "TI", "Audio/Segmenting/ROTI/ti" }, // RUSA
+        new object[] { "Image/Segmenting/tooth",       new string[]{"GI","GI"}, new string[]{"GI","GI","GA","GU"}, new string[]{"Audio/Segmenting/GIGI/gi","Audio/Segmenting/GIGI/gi","Audio/Segmenting/GIGI/ga","Audio/Segmenting/GIGI/gu"}, "BO", "Audio/Segmenting/BOLA/bo" }, // GIGI
+        new object[] { "Image/Segmenting/deer",        new string[]{"RU","SA"}, new string[]{"RU","SA","SU"}, new string[]{"Audio/Segmenting/RUSA/ru","Audio/Segmenting/RUSA/sa","Audio/Segmenting/RUSA/su"}, "TI", "Audio/Segmenting/ROTI/ti" }, // RUSA
 
         // === KATA TANPA AUDIO KHUSUS SEGMENTING (Minjem dari Blending) ===
         new object[] { "Image/Segmenting/home",     new string[]{"RU","MAH"},  new string[]{"RU","MAH","BAH"},  new string[]{"Audio/Blending/Rumah/rum","Audio/Blending/Rumah/ah",""}, "TA",  "" }, // RUMAH

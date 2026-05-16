@@ -59,6 +59,25 @@ public class LevelMapGenerator : MonoBehaviour
         sr.horizontalNormalizedPosition = 0f;
         sr.velocity = Vector2.zero;
         Canvas.ForceUpdateCanvases();
+
+        StartCoroutine(RunTutorialNextFrame());
+    }
+
+    private System.Collections.IEnumerator RunTutorialNextFrame()
+    {
+        yield return new WaitForSeconds(0.5f);
+        if (TutorialManager.Instance != null && levelNodes != null && levelNodes.Length > 0 && levelNodes[0] != null)
+        {
+            var steps = new System.Collections.Generic.List<TutorialStep>
+            {
+                new TutorialStep {
+                    targetRect = levelNodes[0].GetComponent<RectTransform>(),
+                    text = "Klik angka 1 untuk main!",
+                    requiresExactClick = true // Harus klik node ini buat lanjut
+                }
+            };
+            TutorialManager.Instance.StartSequence("Tutorial_LevelMap", steps);
+        }
     }
 
     void UpdateNodeStates()

@@ -102,14 +102,26 @@ public class MainNavigation : MonoBehaviour
     // Fungsi ini tidak butuh parameter, dia langsung baca isi nameInputField
     public void SubmitNameFromInput()
     {
-        if (nameInputField != null && !string.IsNullOrEmpty(nameInputField.text))
+        if (nameInputField != null && !string.IsNullOrWhiteSpace(nameInputField.text))
         {
-            PlayerProfileManager.Instance.SetTempName(nameInputField.text);
+            string playerName = nameInputField.text.Trim();
+
+            if (PlayerProfileManager.Instance.IsProfileNameTaken(playerName))
+            {
+                string message = "Nama sudah ada, gunakan nama lain.";
+                PlayerProfileManager.Instance.ShowAndroidToast(message);
+                Debug.LogWarning($"[MainNavigation] Nama profil duplikat: {playerName}");
+                return;
+            }
+
+            PlayerProfileManager.Instance.SetTempName(playerName);
             SceneManager.LoadScene("OnboardingAge");
         }
         else
         {
-            Debug.LogWarning("Nama kosong, isi input field terlebih dahulu!");
+            string message = "Nama kosong, isi dulu ya.";
+            PlayerProfileManager.Instance.ShowAndroidToast(message);
+            Debug.LogWarning("[MainNavigation] Nama kosong, isi input field terlebih dahulu!");
         }
     }
 
