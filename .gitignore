@@ -1,5 +1,62 @@
+# Unity generated folders
 [Ll]ibrary/
 [Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
 [Ll]ogs/
-UserSettings/
-MemoryCaptures/
+[Uu]ser[Ss]ettings/
+[Mm]emory[Cc]aptures/
+.utmp/
+
+# Unity generated files
+*.csproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+sysinfo.txt
+
+# Build outputs
+*.apk
+*.aab
+*.unitypackage
+
+# IDE/editor local files
+.vs/
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Root-level research/training/helper files outside the Unity game
+/*.py
+/*.pyc
+/__pycache__/
+/*.gs
+/*.xls
+/*.xlsx
+/*.csv
+/*.html
+/*.pdf
+
+# Local/generated ML artifacts outside Assets
+/*.onnx
+/*.pkl
+/*.joblib
+
+# Unity test run output
+Assets/Resources/PerformanceTestRunInfo.json
+Assets/Resources/PerformanceTestRunInfo.json.meta
+Assets/Resources/PerformanceTestRunSettings.json
+Assets/Resources/PerformanceTestRunSettings.json.meta
