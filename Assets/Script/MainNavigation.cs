@@ -174,6 +174,13 @@ public class MainNavigation : MonoBehaviour
         SceneManager.LoadScene("LevelMap");
     }
 
+    public void SelectModeWorkingMemory()
+    {
+        PlayerPrefs.SetString("SelectedGameMode", "WorkingMemory");
+        PlayerPrefs.Save();
+        SceneManager.LoadScene("LevelMap");
+    }
+
     // --- EXIT CONFIRMATION ---
     public void ShowExitConfirmation()
     {

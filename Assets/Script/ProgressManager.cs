@@ -7,8 +7,10 @@ public class GameProgress
     // Progress per mode — Visual dan Fonologis independen
     public int unlockedNodeVisual    = 0;
     public int unlockedNodeFonologis = 0;
+    public int unlockedNodeWorkingMemory = 0;
     public int difficultyVisual      = 1;
     public int difficultyFonologis   = 1;
+    public int difficultyWorkingMemory = 1;
 
     // Data bersama
     public float phonologyWeight        = 0.5f;
@@ -19,6 +21,7 @@ public class GameProgress
     // Bintang per level (maksimal 20 level per mode misalnya)
     public int[] nodeStarsVisual    = new int[20];
     public int[] nodeStarsFonologis = new int[20];
+    public int[] nodeStarsWorkingMemory = new int[20];
 }
 
 public class ProgressManager : MonoBehaviour
@@ -85,6 +88,7 @@ public class ProgressManager : MonoBehaviour
             {
                 string json = File.ReadAllText(saveFilePath);
                 progress = JsonUtility.FromJson<GameProgress>(json);
+                EnsureProgressDefaults();
                 Debug.Log($"[ProgressManager] Loaded: V-diff={progress.difficultyVisual} F-diff={progress.difficultyFonologis} V-node={progress.unlockedNodeVisual} F-node={progress.unlockedNodeFonologis}");
             }
             catch (System.Exception e)
@@ -97,8 +101,27 @@ public class ProgressManager : MonoBehaviour
         {
             Debug.Log("[ProgressManager] No save file found, creating new progress");
             progress = new GameProgress();
+            EnsureProgressDefaults();
             SaveProgress();
         }
+    }
+
+    private void EnsureProgressDefaults()
+    {
+        if (progress == null)
+            progress = new GameProgress();
+        if (progress.difficultyVisual < 1)
+            progress.difficultyVisual = 1;
+        if (progress.difficultyFonologis < 1)
+            progress.difficultyFonologis = 1;
+        if (progress.difficultyWorkingMemory < 1)
+            progress.difficultyWorkingMemory = 1;
+        if (progress.nodeStarsVisual == null || progress.nodeStarsVisual.Length < 20)
+            progress.nodeStarsVisual = new int[20];
+        if (progress.nodeStarsFonologis == null || progress.nodeStarsFonologis.Length < 20)
+            progress.nodeStarsFonologis = new int[20];
+        if (progress.nodeStarsWorkingMemory == null || progress.nodeStarsWorkingMemory.Length < 20)
+            progress.nodeStarsWorkingMemory = new int[20];
     }
 
     public void SaveProgress()
@@ -117,13 +140,16 @@ public class ProgressManager : MonoBehaviour
 
     public int GetCurrentDifficulty()
     {
-        return IsFonologis() ? progress.difficultyFonologis : progress.difficultyVisual;
+        if (IsFonologis()) return progress.difficultyFonologis;
+        if (IsWorkingMemory()) return progress.difficultyWorkingMemory;
+        return progress.difficultyVisual;
     }
 
     public void SetCurrentDifficulty(int difficulty)
     {
-        if (IsFonologis()) progress.difficultyFonologis   = UnityEngine.Mathf.Clamp(difficulty, 1, 5);
-        else               progress.difficultyVisual      = UnityEngine.Mathf.Clamp(difficulty, 1, 5);
+        if (IsFonologis()) progress.difficultyFonologis = UnityEngine.Mathf.Clamp(difficulty, 1, 5);
+        else if (IsWorkingMemory()) progress.difficultyWorkingMemory = UnityEngine.Mathf.Clamp(difficulty, 1, 5);
+        else progress.difficultyVisual = UnityEngine.Mathf.Clamp(difficulty, 1, 5);
         SaveProgress();
     }
 
@@ -151,10 +177,15 @@ public class ProgressManager : MonoBehaviour
             if (progress.unlockedNodeVisual <= currentNodeIndex)
                 progress.unlockedNodeVisual = currentNodeIndex + 1;
         }
-        else
+        else if (mode == "Fonologis")
         {
             if (progress.unlockedNodeFonologis <= currentNodeIndex)
                 progress.unlockedNodeFonologis = currentNodeIndex + 1;
+        }
+        else if (mode == "WorkingMemory")
+        {
+            if (progress.unlockedNodeWorkingMemory <= currentNodeIndex)
+                progress.unlockedNodeWorkingMemory = currentNodeIndex + 1;
         }
         SaveProgress();
     }
@@ -176,6 +207,11 @@ public class ProgressManager : MonoBehaviour
             if (starsEarned > progress.nodeStarsFonologis[nodeIndex])
                 progress.nodeStarsFonologis[nodeIndex] = starsEarned;
         }
+        else if (mode == "WorkingMemory")
+        {
+            if (starsEarned > progress.nodeStarsWorkingMemory[nodeIndex])
+                progress.nodeStarsWorkingMemory[nodeIndex] = starsEarned;
+        }
         SaveProgress();
     }
 
@@ -183,21 +219,28 @@ public class ProgressManager : MonoBehaviour
     {
         if (nodeIndex < 0 || nodeIndex >= 20) return 0;
         if (mode == "Visual") return progress.nodeStarsVisual[nodeIndex];
+        if (mode == "WorkingMemory") return progress.nodeStarsWorkingMemory[nodeIndex];
         return progress.nodeStarsFonologis[nodeIndex];
     }
 
     private static bool IsFonologis()
         => UnityEngine.PlayerPrefs.GetString("SelectedGameMode", "Visual") == "Fonologis";
 
+    private static bool IsWorkingMemory()
+        => UnityEngine.PlayerPrefs.GetString("SelectedGameMode", "Visual") == "WorkingMemory";
+
     public int GetCurrentUnlockedNode()
     {
-        return IsFonologis() ? progress.unlockedNodeFonologis : progress.unlockedNodeVisual;
+        if (IsFonologis()) return progress.unlockedNodeFonologis;
+        if (IsWorkingMemory()) return progress.unlockedNodeWorkingMemory;
+        return progress.unlockedNodeVisual;
     }
 
     public void SetCurrentUnlockedNode(int nodeIndex)
     {
         if (IsFonologis()) progress.unlockedNodeFonologis = nodeIndex;
-        else               progress.unlockedNodeVisual    = nodeIndex;
+        else if (IsWorkingMemory()) progress.unlockedNodeWorkingMemory = nodeIndex;
+        else progress.unlockedNodeVisual = nodeIndex;
         SaveProgress();
     }
 

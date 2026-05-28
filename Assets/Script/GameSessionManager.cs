@@ -46,6 +46,8 @@ public class GameSessionManager : MonoBehaviour
     public GameObject prefabVisualSpacing;   // VisualSpacing.prefab
     public GameObject prefabBlending;        // PanelBlending.prefab
     public GameObject prefabSegmenting;      // PanelSegmenting.prefab
+    public GameObject prefabWorkingMemory;   // PanelMemoryImage.prefab
+    public GameObject prefabWorkingMemoryNumber; // PanelMemoryNumber.prefab
 
     [Header("Panel Container")]
     public Transform panelParent; // Canvas atau RectTransform tempat panel di-spawn
@@ -266,6 +268,8 @@ public class GameSessionManager : MonoBehaviour
             case QuestionType.VisualSpacing:            prefab = prefabVisualSpacing; break;
             case QuestionType.PhonologyBlending:        prefab = prefabBlending;      break;
             case QuestionType.PhonologySegmenting:      prefab = prefabSegmenting;    break;
+            case QuestionType.WorkingMemoryNumbers:      prefab = prefabWorkingMemoryNumber; break;
+            case QuestionType.WorkingMemoryImages:       prefab = prefabWorkingMemory;       break;
         }
 
         if (prefab == null)
@@ -291,6 +295,12 @@ public class GameSessionManager : MonoBehaviour
                 break;
             case QuestionType.PhonologySegmenting:
                 activePanelInstance.GetComponent<FonologisSegmentingPanel>()?.ShowQuestion(q, OnAnswerSelected);
+                break;
+            case QuestionType.WorkingMemoryNumbers:
+                activePanelInstance.GetComponent<WorkingMemoryNumberPanel>()?.ShowQuestion(q, OnAnswerSelected);
+                break;
+            case QuestionType.WorkingMemoryImages:
+                activePanelInstance.GetComponent<WorkingMemoryPanel>()?.ShowQuestion(q, OnAnswerSelected);
                 break;
         }
 
@@ -368,6 +378,23 @@ public class GameSessionManager : MonoBehaviour
                             requiresExactClick = false // Anak cuma klik overlay untuk nutup tutorial, lalu narik manual
                         });
                     }
+                }
+            }
+            else if (QuestionTypeHelper.IsWorkingMemory(q.type))
+            {
+                RectTransform targetBtn = null;
+                if (q.type == QuestionType.WorkingMemoryNumbers)
+                    targetBtn = activePanelInstance.GetComponent<WorkingMemoryNumberPanel>()?.GetCorrectButton();
+                else
+                    targetBtn = activePanelInstance.GetComponent<WorkingMemoryPanel>()?.GetCorrectButton();
+
+                if (targetBtn != null)
+                {
+                    string text = q.type == QuestionType.WorkingMemoryNumbers
+                        ? "Ingat angka di atas, lalu tekan angka sesuai urutan!"
+                        : "Ingat urutan gambar, lalu klik kartu sesuai urutan!";
+
+                    answerSteps.Add(new TutorialStep { targetRect = targetBtn, text = text, requiresExactClick = false });
                 }
             }
 

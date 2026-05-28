@@ -2,16 +2,14 @@ using System.Collections.Generic;
 
 public enum QuestionType
 {
-    // === VISUAL MODE ===
-    VisualLetterRecognition,  // Lihat huruf → pilih huruf yang sama
-    VisualSpacing,            // Lihat kata → pilih ejaan spasi yang benar
-
-    // === FONOLOGIS MODE ===
-    PhonologyBlending,        // Dengar audio suku kata → pilih gambar benda
-    PhonologySegmenting       // Lihat gambar benda → drag suku kata ke slot urutan
+    VisualLetterRecognition,
+    VisualSpacing,
+    PhonologyBlending,
+    PhonologySegmenting,
+    WorkingMemoryNumbers,
+    WorkingMemoryImages
 }
 
-// Mapping helper: mode string → question types yang relevan
 public static class QuestionTypeHelper
 {
     public static bool IsFonologis(QuestionType type)
@@ -19,6 +17,9 @@ public static class QuestionTypeHelper
 
     public static bool IsVisual(QuestionType type)
         => type == QuestionType.VisualLetterRecognition || type == QuestionType.VisualSpacing;
+
+    public static bool IsWorkingMemory(QuestionType type)
+        => type == QuestionType.WorkingMemoryNumbers || type == QuestionType.WorkingMemoryImages;
 }
 
 [System.Serializable]
@@ -26,26 +27,20 @@ public class Question
 {
     public QuestionType type;
 
-    // Stimulus utama (teks atau path gambar)
-    public string stimulus;          // Teks/huruf untuk Visual, path gambar untuk Segmenting
-    public string stimulusImagePath; // Path gambar stimulus (untuk Blending & Segmenting)
+    public string stimulus;
+    public string stimulusImagePath;
 
-    // Jawaban
-    public string correctAnswer;     // Jawaban benar (teks)
-    public List<string> options;     // Pilihan jawaban (teks)
+    public string correctAnswer;
+    public List<string> options;
 
-    // Untuk Blending: opsi berupa gambar
-    public List<string> imageOptions; // Path gambar tiap opsi (untuk Blending)
+    public List<string> imageOptions;
 
-    // Untuk Segmenting: suku kata yang benar secara berurutan
-    public string[] correctSyllables; // Urutan suku kata benar, misal: ["BO","LA"]
-    public string[] allSyllables;     // Semua suku kata (termasuk distraktor), misal: ["BO","LA","LU"]
+    public string[] correctSyllables;
+    public string[] allSyllables;
 
-    // Audio
-    public string audioClipName;     // Path audio clip (untuk Blending & Segmenting per suku kata)
-    public string[] syllableAudios;  // Audio per suku kata di Segmenting, misal: ["Audio/bo","Audio/la","Audio/lu"]
+    public string audioClipName;
+    public string[] syllableAudios;
 
-    // Constructor untuk Visual (Letter Recognition & Spacing)
     public Question(QuestionType type, string stimulus, string correctAnswer, List<string> options)
     {
         this.type = type;
@@ -56,7 +51,6 @@ public class Question
         this.audioClipName = "";
     }
 
-    // Constructor untuk Blending (audio stimulus → pilih gambar)
     public Question(QuestionType type, string audioClipName, string correctAnswer,
                     List<string> imageOptions, string stimulus = "")
     {
@@ -68,7 +62,6 @@ public class Question
         this.options = new List<string>();
     }
 
-    // Constructor untuk Segmenting (gambar → drag suku kata)
     public Question(QuestionType type, string stimulusImagePath, string[] correctSyllables,
                     string[] allSyllables, string[] syllableAudios)
     {

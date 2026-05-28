@@ -76,6 +76,14 @@ public class ChooseModeManager : MonoBehaviour
         SceneManager.LoadScene("LevelMap");
     }
 
+    public void SelectWorkingMemory()
+    {
+        PlayerPrefs.SetString("SelectedGameMode", "WorkingMemory");
+        PlayerPrefs.Save();
+        Debug.Log("[ChooseModeManager] Mode dipilih: Working Memory");
+        SceneManager.LoadScene("LevelMap");
+    }
+
     // Dipanggil oleh tombol Mixed (opsional)
     public void SelectMixed()
     {

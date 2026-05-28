@@ -40,6 +40,22 @@ public class QuestionGenerator : MonoBehaviour
         "MEJA", "BAJU", "SAPU", "AYAM", "PISANG"
     };
 
+    private static readonly string[] memoryImages = new string[]
+    {
+        "Image/Segmenting/soccer_ball",
+        "Image/Segmenting/bread",
+        "Image/Segmenting/horse",
+        "Image/Segmenting/eyes",
+        "Image/Segmenting/table",
+        "Image/Segmenting/shirt",
+        "Image/Segmenting/fish",
+        "Image/Segmenting/hat",
+        "Image/Segmenting/cat",
+        "Image/Segmenting/car",
+        "Image/Segmenting/door",
+        "Image/Segmenting/broom"
+    };
+
     // =============================================
     // BANK SOAL — FONOLOGIS BLENDING
     // Format: { correctImagePath, string[] syllableAudios, distractor1, distractor2, distractor3 }
@@ -119,6 +135,16 @@ public class QuestionGenerator : MonoBehaviour
                 questions.Add(GenerateBlendingQuestion(difficulty));
             for (int i = 0; i < segmentingCount; i++)
                 questions.Add(GenerateSegmentingQuestion(difficulty));
+        }
+        else if (selectedMode == "WorkingMemory")
+        {
+            int numberCount = Mathf.RoundToInt(totalQuestions * 0.5f);
+            int imageCount = totalQuestions - numberCount;
+
+            for (int i = 0; i < numberCount; i++)
+                questions.Add(GenerateMemoryNumberQuestion(difficulty));
+            for (int i = 0; i < imageCount; i++)
+                questions.Add(GenerateMemoryImageQuestion(difficulty));
         }
         else // "Visual" default
         {
@@ -324,6 +350,71 @@ public class QuestionGenerator : MonoBehaviour
             shuffledSyl,
             shuffledAudio
         );
+    }
+
+    private Question GenerateMemoryNumberQuestion(int difficulty)
+    {
+        int optionCount = 9;
+        int sequenceLength = GetMemorySequenceLength(difficulty, 3);
+
+        List<string> options = new List<string>();
+        for (int i = 1; i <= optionCount; i++)
+            options.Add(i.ToString());
+
+        List<string> sequence = new List<string>();
+        for (int i = 0; i < sequenceLength; i++)
+            sequence.Add(Random.Range(1, optionCount + 1).ToString());
+
+        return new Question(
+            QuestionType.WorkingMemoryNumbers,
+            "",
+            string.Join("|", sequence),
+            options
+        );
+    }
+
+    private Question GenerateMemoryImageQuestion(int difficulty)
+    {
+        int optionCount = GetMemoryImageOptionCount(difficulty);
+        int sequenceLength = GetMemorySequenceLength(difficulty, optionCount);
+
+        List<string> pool = new List<string>(memoryImages);
+        ShuffleList(pool);
+
+        List<string> options = pool.GetRange(0, Mathf.Min(optionCount, pool.Count));
+        List<string> sequence = PickSequence(options, sequenceLength);
+        ShuffleList(options);
+
+        Question q = new Question(
+            QuestionType.WorkingMemoryImages,
+            "",
+            string.Join("|", sequence),
+            new List<string>(),
+            ""
+        );
+        q.imageOptions = options;
+        return q;
+    }
+
+    private int GetMemorySequenceLength(int difficulty, int maxOptions)
+    {
+        if (difficulty <= 2) return Mathf.Min(2, maxOptions);
+        if (difficulty == 3) return Mathf.Min(3, maxOptions);
+        return Mathf.Min(4, maxOptions);
+    }
+
+    private int GetMemoryImageOptionCount(int difficulty)
+    {
+        if (difficulty <= 2) return 4;
+        if (difficulty <= 4) return 6;
+        return 8;
+    }
+
+    private List<string> PickSequence(List<string> options, int sequenceLength)
+    {
+        List<string> shuffled = new List<string>(options);
+        ShuffleList(shuffled);
+        return shuffled.GetRange(0, Mathf.Min(sequenceLength, shuffled.Count));
     }
 
     // =============================================
