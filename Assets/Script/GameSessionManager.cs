@@ -556,7 +556,7 @@ public class GameSessionManager : MonoBehaviour
         ProgressManager.Instance.UpdateSessionStats(sessionMetrics);
         string pid   = PlayerProfileManager.Instance.ActiveProfile?.profileId ?? "unknown";
         string pname = PlayerProfileManager.Instance.ActiveProfile?.playerName ?? "unknown";
-        logger.LogSession(pid, pname, nodeIndex, sessionMetrics, diffBefore, diffAfter);
+        logger.LogSession(pid, pname, nodeIndex, selectedMode, sessionMetrics, diffBefore, diffAfter);
         LevelMapGenerator.CheckAndUnlockNode(sessionMetrics);
 
         ShowResults(diffBefore, diffAfter);
