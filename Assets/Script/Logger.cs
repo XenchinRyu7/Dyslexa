@@ -32,6 +32,7 @@ public class SessionLog
     public string profileId;        // ID unik profil pemain
     public string playerName;       // Nama pemain
     public int nodeIndex;
+    public string selectedMode;
     public float accuracy;
     public float error_rate;
     public int phonology_errors;
@@ -43,12 +44,13 @@ public class SessionLog
     public int total_hints_used;
     public string timestamp;
 
-    public SessionLog(string profileId, string playerName, int nodeIndex,
+    public SessionLog(string profileId, string playerName, int nodeIndex, string selectedMode,
                       SessionMetrics metrics, int diffBefore, int diffAfter)
     {
         this.profileId          = profileId;
         this.playerName         = playerName;
         this.nodeIndex          = nodeIndex;
+        this.selectedMode       = selectedMode;
         this.accuracy           = metrics.accuracy;
         this.error_rate         = metrics.error_rate;
         this.phonology_errors   = metrics.kesalahan_fonologis;
@@ -101,10 +103,10 @@ public class Logger : MonoBehaviour
         Debug.Log($"[Logger] Question logged: Node={nodeIndex}, Type={qType}, Correct={correct}");
     }
 
-    public void LogSession(string profileId, string playerName, int nodeIndex,
+    public void LogSession(string profileId, string playerName, int nodeIndex, string selectedMode,
                            SessionMetrics metrics, int diffBefore, int diffAfter)
     {
-        SessionLog log = new SessionLog(profileId, playerName, nodeIndex, metrics, diffBefore, diffAfter);
+        SessionLog log = new SessionLog(profileId, playerName, nodeIndex, selectedMode, metrics, diffBefore, diffAfter);
         sessionLogs.sessions.Add(log);
         SaveSessionLogs();
         Debug.Log($"[Logger] Session logged: Profile={playerName}, Node={nodeIndex}, Accuracy={metrics.accuracy:F2}");

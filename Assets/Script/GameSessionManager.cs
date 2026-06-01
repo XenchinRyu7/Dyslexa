@@ -60,6 +60,7 @@ public class GameSessionManager : MonoBehaviour
     [Header("Managers")]
     private QuestionGenerator questionGenerator;
     private Logger logger;
+    private RuleEngine ruleEngine;
 
     // Session state
     private SessionState currentState = SessionState.Loading;
@@ -172,6 +173,7 @@ public class GameSessionManager : MonoBehaviour
     {
         questionGenerator = GetComponent<QuestionGenerator>() ?? gameObject.AddComponent<QuestionGenerator>();
         logger            = GetComponent<Logger>()            ?? gameObject.AddComponent<Logger>();
+        ruleEngine        = GetComponent<RuleEngine>()        ?? gameObject.AddComponent<RuleEngine>();
     }
 
     void InitializeProgressBar()
@@ -506,18 +508,8 @@ public class GameSessionManager : MonoBehaviour
 
         int diffBefore = difficultyAtStart;
 
-        // ── PURE ML DDA ─────────────────────────────────────────
-        int mlChange = 0;
-        if (DyslexaMLInference.Instance != null)
-        {
-            mlChange = DyslexaMLInference.Instance.Predict(sessionMetrics, diffBefore);
-        }
-        else
-        {
-            Debug.LogWarning("[GameSession] DyslexaMLInference tidak ditemukan, fallback difficulty tetap 0.");
-        }
-
-        int diffAfter = Mathf.Clamp(diffBefore + mlChange, 1, 5);
+        int ruleChange = ruleEngine != null ? ruleEngine.CalculateChange(sessionMetrics) : 0;
+        int diffAfter = Mathf.Clamp(diffBefore + ruleChange, 1, 5);
         ProgressManager.Instance.SetCurrentDifficulty(diffAfter);
 
         // ── Content Weight Adjustment ──────────────────────────────
@@ -544,19 +536,18 @@ public class GameSessionManager : MonoBehaviour
 
         ProgressManager.Instance.SetWeights(phonologyWeight, visualWeight);
 
-        // ── Log ML Output ──────────────────────────────────────────
-        Debug.Log($"[Session] ── Hasil Prediksi PURE ML ──────────────────────\n" +
+        Debug.Log($"[Session] Fuzzy Sugeno Adaptation\n" +
                   $"  Accuracy        : {sessionMetrics.accuracy:P0}\n" +
                   $"  Hint rate       : {sessionMetrics.hint_rate:P0}\n" +
                   $"  Diff sebelum    : {diffBefore}\n" +
-                  $"  ML Model Change : {mlChange:+0;-0;0}\n" +
+                  $"  Rule Change     : {ruleChange:+0;-0;0}\n" +
                   $"  Diff sesudah    : {diffAfter}");
 
 
         ProgressManager.Instance.UpdateSessionStats(sessionMetrics);
         string pid   = PlayerProfileManager.Instance.ActiveProfile?.profileId ?? "unknown";
         string pname = PlayerProfileManager.Instance.ActiveProfile?.playerName ?? "unknown";
-        logger.LogSession(pid, pname, nodeIndex, sessionMetrics, diffBefore, diffAfter);
+        logger.LogSession(pid, pname, nodeIndex, selectedMode, sessionMetrics, diffBefore, diffAfter);
         LevelMapGenerator.CheckAndUnlockNode(sessionMetrics);
 
         ShowResults(diffBefore, diffAfter);

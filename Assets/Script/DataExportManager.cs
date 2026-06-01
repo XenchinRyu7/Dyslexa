@@ -93,7 +93,7 @@ public class DataExportManager : MonoBehaviour
 
         string[] sessionHeaders =
         {
-            "No", "Profile ID", "Nama Pemain", "Level / Node",
+            "No", "Profile ID", "Nama Pemain", "Mode Latihan", "Level / Node",
             "Akurasi (%)", "Error Rate (%)",
             "Error Fonologis", "Error Visual", "Hint Digunakan",
             "Difficulty Sebelum", "Difficulty Sesudah",
@@ -122,6 +122,7 @@ public class DataExportManager : MonoBehaviour
                         sb.AppendLine($"  <Cell><Data ss:Type=\"Number\">{sno++}</Data></Cell>");
                         sb.AppendLine($"  <Cell><Data ss:Type=\"String\">{XmlEsc(s.profileId)}</Data></Cell>");
                         sb.AppendLine($"  <Cell><Data ss:Type=\"String\">{XmlEsc(s.playerName)}</Data></Cell>");
+                        sb.AppendLine($"  <Cell><Data ss:Type=\"String\">{XmlEsc(s.selectedMode)}</Data></Cell>");
                         sb.AppendLine($"  <Cell><Data ss:Type=\"String\">Level {s.nodeIndex + 1}</Data></Cell>");
                         sb.AppendLine($"  <Cell ss:StyleID=\"pct\"><Data ss:Type=\"Number\">{s.accuracy:F4}</Data></Cell>");
                         sb.AppendLine($"  <Cell ss:StyleID=\"pct\"><Data ss:Type=\"Number\">{s.error_rate:F4}</Data></Cell>");
@@ -258,7 +259,7 @@ public class DataExportManager : MonoBehaviour
                 if (logs != null && logs.sessions != null && logs.sessions.Count > 0)
                 {
                     sb.Append("<h2>Riwayat Sesi Permainan</h2>");
-                    sb.Append("<table><tr><th>Node</th><th>Akurasi</th><th>Error Rate</th><th>Err Fonologis</th><th>Err Visual</th><th>Diff Sebelum</th><th>Diff Sesudah</th><th>Rata Waktu (s)</th><th>Total Waktu (s)</th><th>Timestamp</th></tr>");
+                    sb.Append("<table><tr><th>Mode</th><th>Node</th><th>Akurasi</th><th>Error Rate</th><th>Err Fonologis</th><th>Err Visual</th><th>Diff Sebelum</th><th>Diff Sesudah</th><th>Rata Waktu (s)</th><th>Total Waktu (s)</th><th>Timestamp</th></tr>");
 
                     foreach (var s in logs.sessions)
                     {
@@ -267,6 +268,7 @@ public class DataExportManager : MonoBehaviour
 
                         sb.Append(
                             $"<tr>" +
+                            $"<td>{s.selectedMode}</td>" +
                             $"<td>Level {s.nodeIndex + 1}</td>" +
                             $"<td><span class='{passClass}'>{s.accuracy:P0} {passLabel}</span></td>" +
                             $"<td>{s.error_rate:P0}</td>" +
